@@ -28,7 +28,7 @@ jobs:
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.APP_NAME }}
           tags: |
-            type=ref,event=branch,suffix=-{{ sha }}
+            type=ref,event=branch,suffix=-${{ env.IMAGE_TAG }}
             type=ref,event=pr
       -
         name: Login to DockerHub
