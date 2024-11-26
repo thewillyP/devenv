@@ -28,7 +28,8 @@ jobs:
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.APP_NAME }}
           tags: |
-            type=ref,suffix=-${{ env.IMAGE_TAG }}
+            type=ref,event=branch,suffix=-{{ sha }}
+            type=ref,event=pr
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
