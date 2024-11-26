@@ -23,7 +23,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.APP_NAME }}
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.APP_NAME }}
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
