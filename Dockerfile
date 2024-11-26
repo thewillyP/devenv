@@ -1,4 +1,4 @@
-FROM python@sha256:4efa69bf17cfbd83a9942e60e2642335c3b397448e00410063a0421f9727c4c4
+FROM python@sha256:2a6386ad2db20e7f55073f69a98d6da2cf9f168e05e7487d2670baeb9b7601c5
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
