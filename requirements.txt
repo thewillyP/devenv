@@ -1,0 +1,18 @@
+python_version >= 3.8
+jupyterlab
+pandas
+matplotlib
+numpy
+scipy
+scikit-learn
+seaborn
+torch
+torchvision
+toolz
+memory_profiler
+typing-extensions
+mypy
+torchviz
+wandb
+line_profiler
+pyrsistent
