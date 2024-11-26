@@ -24,6 +24,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.APP_NAME }}
+          tag-semver: |
+            {{raw}}
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
