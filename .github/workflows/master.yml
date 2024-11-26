@@ -11,6 +11,9 @@ on:
     branches:
       - 'master'
 
+env :
+  IMAGE_TAG: 1.0.${{ github.run_number }}
+
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -24,8 +27,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.APP_NAME }}
-          tag-semver: |
-            {{raw}}
+          tags: |
+            type=ref,suffix=-{{ env.IMAGE_TAG }}
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
