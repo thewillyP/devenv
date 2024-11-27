@@ -4,7 +4,7 @@
 #SBATCH --mem=12G
 #SBATCH --time=06:00:00
 #SBATCH --job-name=devenv
-#SBATCH --error=devenv_err.
+#SBATCH --error=devenv.err
 #SBATCH --output=devenv.log
 #SBATCH --gres=gpu:0
 #SBATCH --cpus-per-task=8
