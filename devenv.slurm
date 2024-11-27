@@ -47,11 +47,10 @@ singularity exec --nv --containall --no-home \
 --overlay /scratch/${USER}/${IMAGE}.ext3:rw \
 --bind /home/${USER}/.ssh,/home/${USER}/dev \
 /scratch/${USER}/images/${IMAGE}.sif bash -c \
-'mkdir -p /home/${USER}/hostkeys && \
-ssh-keygen -q -N "" -t rsa -b 4096 -f /home/${USER}/hostkeys/ssh_host_rsa_key <<< y && \
-echo /home/${USER}/.bashrc && \
-grep -q "source /.singularity.d/env/10-docker2singularity.sh" /home/${USER}/.bashrc || echo "source /.singularity.d/env/10-docker2singularity.sh" >> /home/${USER}/.bashrc && \
-/usr/sbin/sshd -D -p 2222 -o UsePAM=no -h /home/${USER}/hostkeys/ssh_host_rsa_key'
+'mkdir -p /home/'"${USER}"'/hostkeys && \
+ssh-keygen -q -N "" -t rsa -b 4096 -f /home/'"${USER}"'/hostkeys/ssh_host_rsa_key <<< y && \
+grep -q "source /.singularity.d/env/10-docker2singularity.sh" /home/'"${USER}"'/.bashrc || echo "source /.singularity.d/env/10-docker2singularity.sh" >> /home/'"${USER}"'/.bashrc && \
+/usr/sbin/sshd -D -p 2222 -o UsePAM=no -h /home/'"${USER}"'/hostkeys/ssh_host_rsa_key'
 
 # sshd must be the last cmd to run to be a blocking process
 
