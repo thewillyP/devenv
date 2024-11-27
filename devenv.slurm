@@ -49,6 +49,7 @@ singularity exec --nv --containall --no-home \
 /scratch/${USER}/images/${IMAGE}.sif bash -c \
 'mkdir -p /home/${USER}/hostkeys && \
 ssh-keygen -q -N "" -t rsa -b 4096 -f /home/${USER}/hostkeys/ssh_host_rsa_key <<< y && \
+echo /home/${USER}/.bashrc && \
 grep -q "source /.singularity.d/env/10-docker2singularity.sh" /home/${USER}/.bashrc || echo "source /.singularity.d/env/10-docker2singularity.sh" >> /home/${USER}/.bashrc && \
 /usr/sbin/sshd -D -p 2222 -o UsePAM=no -h /home/${USER}/hostkeys/ssh_host_rsa_key'
 
