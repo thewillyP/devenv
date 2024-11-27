@@ -3,6 +3,9 @@ name: ci
 on:
   workflow_dispatch:
   push:
+    paths-ignore:
+      - 'README.md'
+      - '*.slurm'
     branches:
       - 'master'
     tags:
