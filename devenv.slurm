@@ -49,14 +49,6 @@ singularity exec --nv --containall --no-home \
 /scratch/${USER}/images/${IMAGE}.sif bash -c \
 'mkdir -p /home/wlp9800/hostkeys && \
 ssh-keygen -q -N "" -t rsa -b 4096 -f /home/wlp9800/hostkeys/ssh_host_rsa_key <<< y && \
-echo "if [ -d /.singularity.d/env ]; then
-  for i in /.singularity.d/env/*.sh; do
-    if [ -r \$i ]; then
-      . \$i
-    fi
-  done
-  unset i
-fi" >> ~/.bashrc && \
 /usr/sbin/sshd -D -p 2222 -o UsePAM=no -h /home/wlp9800/hostkeys/ssh_host_rsa_key'
 
 
