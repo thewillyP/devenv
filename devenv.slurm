@@ -41,9 +41,9 @@ singularity build /scratch/${USER}/images/${IMAGE}.sif ${DOCKER_URL}  # check ex
 # 4. let's us jump from greene -> container w/ no password
 grep -qxFf $HOME/.ssh/id_rsa.pub $HOME/.ssh/authorized_keys || cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys  # 1. 2.
 
-singularity exec --nv --containall --no-home \
+singularity exec --nv --containall --no-home --cleanenv \
 --overlay ${SAVE_DIR}${IMAGE}.ext3:rw \
---bind /home/${USER}/.ssh,/home/${USER}/dev:/dev \  
+--bind /home/${USER}/.ssh \  
 /scratch/${USER}/images/${IMAGE}.sif bash -c \
 'mkdir -p /home/${USER}/hostkeys && \
 ssh-keygen -q -N "" -t rsa -b 4096 -f /home/${USER}/hostkeys/ssh_host_rsa_key <<< y && \ 
@@ -52,3 +52,4 @@ if ! grep -q "source /.singularity.d/env/10-docker2singularity.sh" ~/.bashrc; th
     echo "source /.singularity.d/env/10-docker2singularity.sh" >> ~/.bashrc; \
 fi" >> ~/.bashrc'
 
+# ,/home/${USER}/dev:/dev
