@@ -43,7 +43,7 @@ grep -qxFf $HOME/.ssh/id_rsa.pub $HOME/.ssh/authorized_keys || cat $HOME/.ssh/id
 
 singularity exec --nv --containall --no-home \
 --overlay ${SAVE_DIR}${IMAGE}.ext3:rw \
---bind /home/${USER}/.ssh,/home/${USER}/dev:/home/${USER}/dev \  
+--bind /home/${USER}/.ssh,/home/${USER}/dev:/dev \  
 /scratch/${USER}/images/${IMAGE}.sif bash -c \
 'mkdir -p /home/${USER}/hostkeys && \
 ssh-keygen -q -N "" -t rsa -b 4096 -f /home/${USER}/hostkeys/ssh_host_rsa_key <<< y && \ 
