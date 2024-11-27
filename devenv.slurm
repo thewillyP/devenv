@@ -41,10 +41,12 @@ singularity build /scratch/${USER}/images/${IMAGE}.sif ${DOCKER_URL}  # check ex
 # 4. let's us jump from greene -> container w/ no password
 grep -qxFf $HOME/.ssh/id_rsa.pub $HOME/.ssh/authorized_keys || cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys  # 1. 2.
 
+
+
 singularity exec --nv --containall --no-home \
---overlay "${SAVE_DIR}${IMAGE}.ext3:rw" \
---bind "/home/${USER}/.ssh" \  
-"/scratch/${USER}/images/${IMAGE}.sif" bash -c \
+--overlay /scratch/wlp9800/${IMAGE}.ext3:rw \
+--bind /home/wlp9800/.ssh,/home/wlp9800/dev:/workspace \
+/scratch/${USER}/images/${IMAGE}.sif bash -c \
 'mkdir -p /home/wlp9800/hostkeys && \
 ssh-keygen -q -N "" -t rsa -b 4096 -f /home/wlp9800/hostkeys/ssh_host_rsa_key <<< y && \
 echo "if [ -d /.singularity.d/env ]; then
@@ -56,3 +58,6 @@ echo "if [ -d /.singularity.d/env ]; then
   unset i
 fi" >> ~/.bashrc && \
 /usr/sbin/sshd -D -p 2222 -o UsePAM=no -h /home/wlp9800/hostkeys/ssh_host_rsa_key'
+
+
+
