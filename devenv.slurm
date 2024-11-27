@@ -43,11 +43,11 @@ grep -qxFf $HOME/.ssh/id_rsa.pub $HOME/.ssh/authorized_keys || cat $HOME/.ssh/id
 
 singularity exec --nv --containall --no-home \
 --overlay ${SAVE_DIR}${IMAGE}.ext3:rw \
---bind /home/${USER}/.ssh,/home/${USER}/dev \  # 3.
+--bind /home/${USER}/.ssh,/home/${USER}/dev \  
 /scratch/${USER}/images/${IMAGE}.sif bash -c \
 'mkdir -p /home/${USER}/hostkeys && \
-ssh-keygen -q -N "" -t rsa -b 4096 -f /home/${USER}/hostkeys/ssh_host_rsa_key <<< y && \  # server needs new key initialized
-/usr/sbin/sshd -D -p 2222 -o UsePAM=no -h /home/${USER}/hostkeys/ssh_host_rsa_key  && \  # 4.
+ssh-keygen -q -N "" -t rsa -b 4096 -f /home/${USER}/hostkeys/ssh_host_rsa_key <<< y && \ 
+/usr/sbin/sshd -D -p 2222 -o UsePAM=no -h /home/${USER}/hostkeys/ssh_host_rsa_key  && \  
 if ! grep -q "source /.singularity.d/env/10-docker2singularity.sh" ~/.bashrc; then \
     echo "source /.singularity.d/env/10-docker2singularity.sh" >> ~/.bashrc; \
 fi" >> ~/.bashrc'
