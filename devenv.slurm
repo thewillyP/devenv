@@ -28,7 +28,7 @@ if [ ! -f "${SAVE_DIR}${IMAGE}.ext3" ]; then
     cp -rp /scratch/work/public/overlay-fs-ext3/${OVERLAY_TYPE}.gz "${SAVE_DIR}${IMAGE}.ext3.gz"
     gunzip "${SAVE_DIR}${IMAGE}.ext3.gz"
 else
-    echo "File $OVERLAY_TYPE already exists in $SAVE_DIR."
+    echo "File "${SAVE_DIR}${IMAGE}.ext3" already exists in $SAVE_DIR."
 fi
 
 # Build image
