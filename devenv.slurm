@@ -2,7 +2,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=12G
-#SBATCH --time=08:00:00
+#SBATCH --time=06:00:00
 #SBATCH --job-name=devenv
 #SBATCH --error=devenv_err.
 #SBATCH --output=devenv.log
