@@ -11,11 +11,15 @@
 #SBATCH --mail-type=BEGIN
 #SBATCH --mail-user=wlp9800@nyu.edu
 
+# Changes often
 USER=wlp9800
 IMAGE=devenv
-DOCKER_URL=docker://thewillyp/oho@sha256:c63e8c3cf3e3f4ea4d4aef514c869dc863e4a3e7cf84a678325c0271e034c8ff
-SAVE_DIR="/scratch/${USER}/"
 OVERLAY_TYPE="overlay-15GB-500K.ext3"
+
+# Don't have to change as much
+DOCKER_URL="docker://thewillyp/${IMAGE}@sha256:c63e8c3cf3e3f4ea4d4aef514c869dc863e4a3e7cf84a678325c0271e034c8ff"
+SAVE_DIR="/scratch/${USER}/"
+
 
 
 # Check if the file already exists
