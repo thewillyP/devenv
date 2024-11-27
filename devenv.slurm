@@ -47,3 +47,4 @@ ssh-keygen -q -N "" -t rsa -b 4096 -f /home/${USER}/hostkeys/ssh_host_rsa_key <<
 if ! grep -q "source /.singularity.d/env/10-docker2singularity.sh" ~/.bashrc; then \
     echo "source /.singularity.d/env/10-docker2singularity.sh" >> ~/.bashrc; \
 fi" >> ~/.bashrc'
+
