@@ -44,10 +44,10 @@ grep -qxFf $HOME/.ssh/id_rsa.pub $HOME/.ssh/authorized_keys || cat $HOME/.ssh/id
 
 
 singularity exec --nv --containall --no-home \
---overlay /scratch/wlp9800/${IMAGE}.ext3:rw \
---bind /home/wlp9800/.ssh,/home/wlp9800/dev:/workspace \
+--overlay /scratch/${USER}/${IMAGE}.ext3:rw \
+--bind /home/${USER}/.ssh,/home/${USER}/dev:/workspace \
 /scratch/${USER}/images/${IMAGE}.sif bash -c \
-'mkdir -p /home/wlp9800/hostkeys && \
+'mkdir -p /home/${USER}/hostkeys && \
 ssh-keygen -q -N "" -t rsa -b 4096 -f /home/wlp9800/hostkeys/ssh_host_rsa_key <<< y && \
 /usr/sbin/sshd -D -p 2222 -o UsePAM=no -h /home/wlp9800/hostkeys/ssh_host_rsa_key'
 
