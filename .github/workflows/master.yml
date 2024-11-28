@@ -16,7 +16,7 @@ on:
 
 jobs:
   docker:
-    uses: thewillyP/ReusableWorkflow/.github/workflows/main.yml
+    uses: thewillyP/ReusableWorkflow/.github/workflows/main.yml@main
     with:
       image_name: devenv
       tag: 1.0.${{ github.run_number }}
