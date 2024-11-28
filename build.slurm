@@ -2,7 +2,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=14G
-#SBATCH --time=01:00:00
+#SBATCH --time=00:15:00
 #SBATCH --job-name=build
 #SBATCH --error=build.err
 #SBATCH --output=build.log
