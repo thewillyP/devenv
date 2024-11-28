@@ -7,6 +7,8 @@
 #SBATCH --error=build.err
 #SBATCH --output=build.log
 #SBATCH --cpus-per-task=10
+#SBATCH --mail-type=END
+#SBATCH --mail-user=wlp9800@nyu.edu
 
 USER=wlp9800
 IMAGE=devenv
