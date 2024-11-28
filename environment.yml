@@ -1,0 +1,27 @@
+name: master
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python>=3.8
+  - pip
+  - jupyterlab
+  - pandas
+  - matplotlib
+  - numpy
+  - scipy
+  - scikit-learn
+  - seaborn
+  - pytorch
+  - pytorch-cuda=12.4
+  - torchvision
+  - toolz
+  - memory_profiler
+  - typing-extensions
+  - mypy
+  - torchviz
+  - wandb
+  - memory-profiler
+  - line_profiler
+  - pyrsistent
