@@ -20,3 +20,4 @@ jobs:
     with:
       image_name: devenv
       tag: 1.0.${{ github.run_number }}
+    secrets: inherit
