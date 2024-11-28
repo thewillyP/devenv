@@ -20,8 +20,9 @@ dependencies:
   - memory_profiler
   - typing-extensions
   - mypy
-  - torchviz
   - wandb
-  - memory-profiler
+  - memory_profiler
   - line_profiler
   - pyrsistent
+  - pip:
+    - torchviz    
