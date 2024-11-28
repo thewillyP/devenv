@@ -1,5 +1,8 @@
 FROM mambaorg/micromamba@sha256:3d2c726920261b6237acf5dc43f7ad04ef69e7774926135c79ca789d0cbfd9dc
 
+# NECESSARY for mamba images
+USER root
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     openssh-server \
