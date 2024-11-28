@@ -1,4 +1,4 @@
-FROM mambaorg/micromamba@sha256:3d2c726920261b6237acf5dc43f7ad04ef69e7774926135c79ca789d0cbfd9dc
+FROM mambaorg/micromamba:ubuntu22.04@sha256:46420ba0d87aaa518ca2a70df2c33f26994e3f34b55af2d3e0583e4aa237f55c
 
 # NECESSARY for mamba images
 USER root
