@@ -29,9 +29,11 @@ singularity exec --nv --containall --no-home --cleanenv \
 --overlay /scratch/${USER}/${IMAGE}.ext3:rw \
 --bind /home/${USER}/.ssh,/home/${USER}/dev \
 /scratch/${USER}/images/${IMAGE}.sif bash -c \
-'mkdir -p /home/'"${USER}"'/hostkeys && \
+'micromamba shell init --shell bash --root-prefix=/opt/conda && \
+grep -q "source /.singularity.d/env/10-docker2singularity.sh" /home/'"${USER}"'/.bashrc || echo "source /.singularity.d/env/10-docker2singularity.sh" >> /home/'"${USER}"'/.bashrc && \
+grep -q "export LD_LIBRARY_PATH=\"/.singularity.d/libs\"" /home/'"${USER}"'/.bashrc || echo "export LD_LIBRARY_PATH=\"/.singularity.d/libs\"" >> /home/'"${USER}"'/.bashrc && \
+mkdir -p /home/'"${USER}"'/hostkeys && \
 ssh-keygen -q -N "" -t rsa -b 4096 -f /home/'"${USER}"'/hostkeys/ssh_host_rsa_key <<< y && \
 /usr/sbin/sshd -D -p 2222 -o UsePAM=no -h /home/'"${USER}"'/hostkeys/ssh_host_rsa_key'
 
 # sshd must be the last cmd to run to be a blocking process
-# grep -q "source /.singularity.d/env/10-docker2singularity.sh" /home/'"${USER}"'/.bashrc || echo "source /.singularity.d/env/10-docker2singularity.sh" >> /home/'"${USER}"'/.bashrc && \
