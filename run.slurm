@@ -14,7 +14,6 @@
 # Changes often
 USER=wlp9800
 IMAGE=devenv
-CONDA_ENV=master
 
 
 
@@ -30,11 +29,9 @@ singularity exec --nv --containall --no-home --cleanenv \
 --overlay /scratch/${USER}/${IMAGE}.ext3:rw \
 --bind /home/${USER}/.ssh,/home/${USER}/dev \
 /scratch/${USER}/images/${IMAGE}.sif bash -c \
-'micromamba shell init --shell bash --root-prefix=/opt/conda && \
-grep -q "source /.singularity.d/env/10-docker2singularity.sh" /home/'"${USER}"'/.bashrc || echo "source /.singularity.d/env/10-docker2singularity.sh" >> /home/'"${USER}"'/.bashrc && \
+'grep -q "source /.singularity.d/env/10-docker2singularity.sh" /home/'"${USER}"'/.bashrc || echo "source /.singularity.d/env/10-docker2singularity.sh" >> /home/'"${USER}"'/.bashrc && \
 grep -q "export LD_LIBRARY_PATH=\"/.singularity.d/libs\"" /home/'"${USER}"'/.bashrc || echo "export LD_LIBRARY_PATH=\"/.singularity.d/libs\"" >> /home/'"${USER}"'/.bashrc && \
 source /home/'"${USER}"'/.bashrc && \
-micromamba activate '"${CONDA_ENV}"' && \
 mkdir -p /home/'"${USER}"'/notebooks && \
 jupyter lab --notebook-dir=/home/'"${USER}"'/notebooks --ip="0.0.0.0" --port=8888 --no-browser & \
 mkdir -p /home/'"${USER}"'/hostkeys && \

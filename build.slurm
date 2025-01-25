@@ -12,7 +12,7 @@
 
 USER=wlp9800
 IMAGE=devenv
-DOCKER_URL="docker://thewillyp/${IMAGE}:master-1.0.19@sha256:fb9d0830a7239a4e977eea92ff886c9d5ca818f5148b5103ef50bf730248bdf2"
+DOCKER_URL="docker://thewillyp/${IMAGE}:master-1.0.35@sha256:0123b6c36e681d18fe5c841fcd8c6cc6a1d8d9b43a1a9f1eb226bc62d34c46d9"
 OVERLAY_TYPE="overlay-15GB-500K.ext3"
 SAVE_DIR="/scratch/${USER}/"
 
