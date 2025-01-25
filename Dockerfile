@@ -1,7 +1,6 @@
-FROM mambaorg/micromamba:ubuntu22.04@sha256:46420ba0d87aaa518ca2a70df2c33f26994e3f34b55af2d3e0583e4aa237f55c
+FROM ghcr.io/astral-sh/uv:bookworm-slim@sha256:d7dc3a704b9d17030f9d5e979025692cb283880af0335600163bbd99383e234f
 
-# NECESSARY for mamba images
-USER root
+ENV UV_COMPILE_BYTECODE=1
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -32,6 +31,6 @@ SHELL ["/bin/bash", "-c"]
 
 WORKDIR /workspace
 
-COPY ./environment.yml .
+COPY ./requirements.txt .
 
-RUN micromamba create -f environment.yml && micromamba clean --all --yes
+RUN uv pip install --system --no-cache -r requirements.txt
