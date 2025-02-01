@@ -16,8 +16,12 @@ on:
 
 jobs:
   docker:
+    strategy:
+      matrix:
+        variant: [cpu, gpu]  # Define a matrix to build both CPU and GPU versions
     uses: thewillyP/ReusableWorkflow/.github/workflows/main.yml@main
     with:
-      image_name: devenv
+      image_name: devenv-${{ matrix.variant }}  # Different image names for CPU and GPU
       tag: 1.0.${{ github.run_number }}
+      build_args: VARIANT=${{ matrix.variant }}  # Pass the variant as a build argument
     secrets: inherit

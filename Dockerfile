@@ -32,6 +32,8 @@ SHELL ["/bin/bash", "-c"]
 
 WORKDIR /workspace
 
-COPY ./requirements.txt .
+# Use build argument to select the correct requirements file
+ARG VARIANT
+COPY ./requirements-${VARIANT}.txt ./requirements.txt
 
 RUN uv pip install --system --no-cache -r requirements.txt
