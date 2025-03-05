@@ -20,3 +20,4 @@ jax[cuda12]
 optax
 torchviz
 donotation
+matfree
