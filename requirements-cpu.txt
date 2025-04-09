@@ -22,3 +22,4 @@ optax
 torchviz
 donotation
 matfree
+git+https://github.com/thewillyP/sweep-agent.git

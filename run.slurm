@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --mem=12G
-#SBATCH --time=02:00:00
+#SBATCH --mem=14G
+#SBATCH --time=03:00:00
 #SBATCH --job-name=run
 #SBATCH --error=run.err
 #SBATCH --output=run.log
