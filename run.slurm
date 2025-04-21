@@ -2,12 +2,12 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=14G
-#SBATCH --time=03:00:00
+#SBATCH --time=06:00:00
 #SBATCH --job-name=run
 #SBATCH --error=run.err
 #SBATCH --output=run.log
-#SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=2
+#SBATCH --gres=gpu:0
+#SBATCH --cpus-per-task=8
 #SBATCH --mail-type=BEGIN
 #SBATCH --mail-user=wlp9800@nyu.edu
 
@@ -28,6 +28,7 @@ grep -qxFf $HOME/.ssh/id_rsa.pub $HOME/.ssh/authorized_keys || cat $HOME/.ssh/id
 singularity exec --nv --containall --no-home --cleanenv \
 --overlay /scratch/${USER}/${IMAGE}.ext3:rw \
 --bind /home/${USER}/.ssh,/home/${USER}/dev,/scratch/${USER}/wandb:/wandb_data \
+--bind /scratch/${USER}/space:/scratch \
 /scratch/${USER}/images/${IMAGE}.sif bash -c \
 'grep -q "source /.singularity.d/env/10-docker2singularity.sh" /home/'"${USER}"'/.bashrc || echo "source /.singularity.d/env/10-docker2singularity.sh" >> /home/'"${USER}"'/.bashrc && \
 grep -q "export LD_LIBRARY_PATH=\"/.singularity.d/libs\"" /home/'"${USER}"'/.bashrc || echo "export LD_LIBRARY_PATH=\"/.singularity.d/libs\"" >> /home/'"${USER}"'/.bashrc && \

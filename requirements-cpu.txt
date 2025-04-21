@@ -22,4 +22,5 @@ optax
 torchviz
 donotation
 matfree
+dacite
 git+https://github.com/thewillyP/sweep-agent.git
