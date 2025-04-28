@@ -6,6 +6,7 @@ scipy
 scikit-learn
 seaborn
 torch
+torchvision
 toolz
 memory_profiler
 typing-extensions
