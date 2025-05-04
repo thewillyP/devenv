@@ -22,6 +22,7 @@ RUN apt-get update \
     man \
     graphviz \
     pandoc \
+    swig \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

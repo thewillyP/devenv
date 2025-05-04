@@ -19,7 +19,7 @@ SAVE_DIR="/scratch/${USER}/"
 
 # Check if the file already exists
 # https://sites.google.com/nyu.edu/nyu-hpc/hpc-systems/greene/software/singularity-with-miniconda?authuser=0
-cp -rp /scratch/work/public/overlay-fs-ext3/${OVERLAY_TYPE}.gz "${SAVE_DIR}${IMAGE}.ext3.gz"
-gunzip -f "${SAVE_DIR}${IMAGE}.ext3.gz"
+cp -rp /scratch/work/public/overlay-fs-ext3/${OVERLAY_TYPE}.gz "${SAVE_DIR}${IMAGE}-gpu.ext3.gz"
+gunzip -f "${SAVE_DIR}${IMAGE}-gpu.ext3.gz"
 
-singularity build --force /scratch/${USER}/images/${IMAGE}.sif ${DOCKER_URL} 
+singularity build --force /scratch/${USER}/images/${IMAGE}-gpu.sif ${DOCKER_URL} 
