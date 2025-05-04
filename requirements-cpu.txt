@@ -24,5 +24,4 @@ torchviz
 donotation
 matfree
 dacite
-swig
 git+https://github.com/thewillyP/sweep-agent.git
