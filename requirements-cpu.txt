@@ -24,4 +24,6 @@ torchviz
 donotation
 matfree
 dacite
+gymnasium
+gymnasium[box2d]
 git+https://github.com/thewillyP/sweep-agent.git
