@@ -76,11 +76,10 @@ pipeline {
                 }
             }
         }
-
         stage('Run Job via sbatch') {
-    steps {
-        sh """
-        ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'sbatch <<EOF
+            steps {
+                sh """
+                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'sbatch <<EOF
 #!/bin/bash
 #SBATCH --job-name=run_${IMAGE}
 #SBATCH --nodes=1
@@ -103,6 +102,8 @@ singularity run ${params.VARIANT == 'gpu' ? '--nv' : ''} \\
   --bind /scratch/${SSH_USER}/space:/scratch \\
   ${SIF_PATH}
 EOF'
-        """
+                """
+            }
+        }
     }
 }
