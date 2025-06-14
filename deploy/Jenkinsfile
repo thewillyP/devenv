@@ -65,7 +65,7 @@ pipeline {
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=10G
-#SBATCH --time=00:15:00
+#SBATCH --time=00:30:00
 #SBATCH --output=${LOG_DIR}/build-${IMAGE}-%j.log
 #SBATCH --error=${LOG_DIR}/build-${IMAGE}-%j.err
 
