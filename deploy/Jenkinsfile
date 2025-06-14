@@ -59,7 +59,7 @@ pipeline {
                         sh """
                         ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} '
                             srun --nodes=1 --ntasks=1 --mem=4G --time=00:15:00 \\
-                                 --cpus-per-task=4 --job-name=build_${IMAGE} \\
+                                 --job-name=build_${IMAGE} \\
                                  --output=${LOG_DIR}/build-${IMAGE}-%j.log \\
                                  --error=${LOG_DIR}/build-${IMAGE}-%j.err \\
                                  bash -c "
