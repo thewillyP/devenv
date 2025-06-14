@@ -45,7 +45,7 @@ pipeline {
                 """
             }
         }
-        stage('Build Image with srun if needed') {
+        stage('Build Image with sbatch if needed') {
             steps {
                 script {
                     def exists = sh(
@@ -54,32 +54,44 @@ pipeline {
                     ).trim()
 
                     if (params.FORCE_REBUILD || exists == "missing") {
-                        echo "Building Singularity image on ${EXEC_HOST} for variant: ${params.VARIANT}..."
+                        echo "Submitting sbatch build job for image..."
 
-                        sh """
-                        ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} '
-                            srun --nodes=1 --ntasks=1 --mem=8G --time=00:15:00 \\
-                                 --job-name=build_${IMAGE} \\
-                                 --output=${LOG_DIR}/build-${IMAGE}-%j.log \\
-                                 --error=${LOG_DIR}/build-${IMAGE}-%j.err \\
-                                 bash -c "
-                                    mkdir -p ${SCRATCH_DIR}/images && \\
-                                    cp -rp /scratch/work/public/overlay-fs-ext3/overlay-25GB-500K.ext3.gz ${OVERLAY_PATH}.gz && \\
-                                    gunzip -f ${OVERLAY_PATH}.gz && \\
-                                    singularity build --force ${SIF_PATH} ${DOCKER_URL}
-                                 "
-                        '
-                        """
+                        // Submit sbatch and capture Job ID
+                        env.BUILD_JOB_ID = sh(
+                            script: """
+                            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'sbatch <<EOF
+#!/bin/bash
+#SBATCH --job-name=build_${IMAGE}
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mem=10G
+#SBATCH --time=00:15:00
+#SBATCH --output=${LOG_DIR}/build-${IMAGE}-%j.log
+#SBATCH --error=${LOG_DIR}/build-${IMAGE}-%j.err
+
+mkdir -p ${SCRATCH_DIR}/images
+cp -rp /scratch/work/public/overlay-fs-ext3/overlay-25GB-500K.ext3.gz ${OVERLAY_PATH}.gz
+gunzip -f ${OVERLAY_PATH}.gz
+singularity build --force ${SIF_PATH} ${DOCKER_URL}
+EOF' | awk '/Submitted batch job/ {print \$4}'
+                            """,
+                            returnStdout: true
+                        ).trim()
+                        echo "Build job submitted with ID: ${env.BUILD_JOB_ID}"
                     } else {
                         echo "Singularity image already exists: ${SIF_PATH}. Skipping build."
+                        env.BUILD_JOB_ID = ""
                     }
                 }
             }
         }
         stage('Run Job via sbatch') {
             steps {
-                sh """
-                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'sbatch <<EOF
+                script {
+                    def dependency = env.BUILD_JOB_ID ? "#SBATCH --dependency=afterok:${env.BUILD_JOB_ID}" : ""
+
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'sbatch <<EOF
 #!/bin/bash
 #SBATCH --job-name=run_${IMAGE}
 #SBATCH --nodes=1
@@ -92,6 +104,7 @@ pipeline {
 #SBATCH --mail-type=BEGIN
 #SBATCH --mail-user=${SSH_USER}@nyu.edu
 ${params.VARIANT == 'gpu' ? '#SBATCH --gres=gpu:0' : ''}
+${dependency}
 
 singularity run ${params.VARIANT == 'gpu' ? '--nv' : ''} \\
   --containall --no-home --cleanenv \\
@@ -102,7 +115,8 @@ singularity run ${params.VARIANT == 'gpu' ? '--nv' : ''} \\
   --bind /scratch/${SSH_USER}/space:/scratch \\
   ${SIF_PATH}
 EOF'
-                """
+                    """
+                }
             }
         }
     }
