@@ -26,7 +26,25 @@ pipeline {
                 }
             }
         }
-
+        stage('Cancel Queued Jobs') {
+            steps {
+                sh """
+                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} '
+                    for jobname in "build_${IMAGE}" "run_${IMAGE}"; do
+                        active_jobs=\$(squeue -u ${SSH_USER} -n \$jobname -h -o "%i")
+                        if [ -n "\$active_jobs" ]; then
+                            echo "Cancelling existing jobs for \$jobname: \$active_jobs"
+                            for jobid in \$active_jobs; do
+                                scancel \$jobid
+                            done
+                        else
+                            echo "No jobs to cancel for \$jobname"
+                        fi
+                    done
+                '
+                """
+            }
+        }
         stage('Build Image with srun if needed') {
             steps {
                 script {
