@@ -38,3 +38,9 @@ ARG VARIANT
 COPY ./requirements-${VARIANT}.txt ./requirements.txt
 
 RUN uv pip install --system --no-cache -r requirements.txt
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD []

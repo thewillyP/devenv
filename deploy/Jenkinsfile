@@ -1,0 +1,90 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'VARIANT', choices: ['cpu', 'gpu'], description: 'Select variant (cpu/gpu)')
+        booleanParam(name: 'FORCE_REBUILD', defaultValue: false, description: 'Force rebuild of the Singularity image')
+    }
+
+    environment {
+        SSH_USER = 'wlp9800'
+        VARIANT = "${params.VARIANT}"
+        IMAGE = "devenv-${params.VARIANT}"
+        SCRATCH_DIR = "/scratch/${SSH_USER}"
+        LOG_DIR = "/vast/${SSH_USER}/logs"
+        SIF_PATH = "${SCRATCH_DIR}/images/${IMAGE}.sif"
+        OVERLAY_PATH = "${SCRATCH_DIR}/${IMAGE}.ext3"
+        DOCKER_URL = "docker://thewillyp/devenv:${params.VARIANT}"
+    }
+
+    stages {
+        stage('Get Current Executor Hostname') {
+            steps {
+                script {
+                    env.EXEC_HOST = sh(script: "hostname", returnStdout: true).trim()
+                    echo "Running on host: ${env.EXEC_HOST}"
+                }
+            }
+        }
+
+        stage('Build Image with srun if needed') {
+            steps {
+                script {
+                    def exists = sh(
+                        script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} '[ -f ${SIF_PATH} ] && echo exists || echo missing'",
+                        returnStdout: true
+                    ).trim()
+
+                    if (params.FORCE_REBUILD || exists == "missing") {
+                        echo "Building Singularity image on ${EXEC_HOST} for variant: ${params.VARIANT}..."
+
+                        sh """
+                        ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} '
+                            srun --nodes=1 --ntasks=1 --mem=10G --time=00:15:00 \\
+                                 --cpus-per-task=6 --job-name=build_${IMAGE} \\
+                                 --output=${LOG_DIR}/build-${IMAGE}-%j.log \\
+                                 --error=${LOG_DIR}/build-${IMAGE}-%j.err \\
+                                 bash -c "
+                                    mkdir -p ${SCRATCH_DIR}/images && \\
+                                    cp -rp /scratch/work/public/overlay-fs-ext3/overlay-25GB-500K.ext3.gz ${OVERLAY_PATH}.gz && \\
+                                    gunzip -f ${OVERLAY_PATH}.gz && \\
+                                    singularity build --force ${SIF_PATH} ${DOCKER_URL}
+                                 "
+                        '
+                        """
+                    } else {
+                        echo "Singularity image already exists: ${SIF_PATH}. Skipping build."
+                    }
+                }
+            }
+        }
+
+        stage('Run Job via sbatch') {
+    steps {
+        sh """
+        ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'sbatch <<EOF
+#!/bin/bash
+#SBATCH --job-name=run_${IMAGE}
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --mem=14G
+#SBATCH --time=06:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --output=${LOG_DIR}/run-${IMAGE}-%j.log
+#SBATCH --error=${LOG_DIR}/run-${IMAGE}-%j.err
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-user=${SSH_USER}@nyu.edu
+${params.VARIANT == 'gpu' ? '#SBATCH --gres=gpu:0' : ''}
+
+singularity run ${params.VARIANT == 'gpu' ? '--nv' : ''} \\
+  --containall --no-home --cleanenv \\
+  --overlay ${OVERLAY_PATH}:rw \\
+  --bind /home/${SSH_USER}/.ssh \\
+  --bind /home/${SSH_USER}/dev \\
+  --bind /scratch/${SSH_USER}/wandb:/wandb_data \\
+  --bind /scratch/${SSH_USER}/space:/scratch \\
+  ${SIF_PATH}
+EOF'
+        """
+    }
+}
