@@ -101,8 +101,6 @@ EOF' | awk '/Submitted batch job/ {print \$4}'
 #SBATCH --cpus-per-task=4
 #SBATCH --output=${LOG_DIR}/run-${IMAGE}-%j.log
 #SBATCH --error=${LOG_DIR}/run-${IMAGE}-%j.err
-#SBATCH --mail-type=BEGIN
-#SBATCH --mail-user=${SSH_USER}@nyu.edu
 ${params.VARIANT == 'gpu' ? '#SBATCH --gres=gpu:0' : ''}
 ${dependency}
 
