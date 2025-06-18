@@ -1,23 +1,45 @@
 #!/bin/bash
 
-
 BASHRC="/home/${USER}/.bashrc"
 DOCKER_SOURCE='source /.singularity.d/env/10-docker2singularity.sh'
 LIB_EXPORT='export LD_LIBRARY_PATH="/.singularity.d/libs"'
 
-[ -f "/home/${USER}/.bashrc" ] || touch "/home/${USER}/.bashrc"
+# Define the environment variables to persist
+ENV_VARS=$(cat << EOF
+# Pipeline environment variables
+export DB_HOST="\${DB_HOST}"
+export POSTGRES_USER="\${POSTGRES_USER}"
+export POSTGRES_PASSWORD="\${POSTGRES_PASSWORD}"
+export POSTGRES_DB="\${POSTGRES_DB}"
+export PGPORT="\${PGPORT}"
+EOF
+)
+
+# Create .bashrc if it doesn't exist
+[ -f "$BASHRC" ] || touch "$BASHRC"
 
 # Add docker2singularity source line if not already present
 if ! grep -q "$DOCKER_SOURCE" "$BASHRC"; then
     echo "$DOCKER_SOURCE" >> "$BASHRC"
 fi
+
 # Add LD_LIBRARY_PATH export if not already present
 if ! grep -q "$LIB_EXPORT" "$BASHRC"; then
     echo "$LIB_EXPORT" >> "$BASHRC"
 fi
 
-# Launch jupyter notebook
-source $BASHRC
+# Add pipeline environment variables if not already present
+if ! grep -q "# Pipeline environment variables" "$BASHRC"; then
+    echo "$ENV_VARS" >> "$BASHRC"
+else
+    # Update existing variables to avoid duplicates
+    sed -i '/# Pipeline environment variables/,/^export PGPORT=/c\'"$ENV_VARS" "$BASHRC"
+fi
+
+# Source .bashrc to apply changes in the current session
+source "$BASHRC"
+
+# Launch Jupyter notebook
 mkdir -p /home/${USER}/notebooks
 jupyter lab --notebook-dir=/home/${USER}/notebooks --ip="0.0.0.0" --port=8888 --no-browser &
 

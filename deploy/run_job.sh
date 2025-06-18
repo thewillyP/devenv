@@ -22,8 +22,6 @@ sbatch <<EOF
 #SBATCH --cpus-per-task=4
 #SBATCH --output=${LOG_DIR}/run-${IMAGE}-%j.log
 #SBATCH --error=${LOG_DIR}/run-${IMAGE}-%j.err
-#SBATCH --mail-type=BEGIN
-#SBATCH --mail-user=${SSH_USER}@nyu.edu
 ${VARIANT == 'gpu' ? '#SBATCH --gres=gpu:0' : ''}
 ${DEPENDENCY}
 
@@ -34,7 +32,7 @@ singularity run ${VARIANT == 'gpu' ? '--nv' : ''} \\
   --bind /home/${SSH_USER}/dev \\
   --bind /scratch/${SSH_USER}/wandb:/wandb_data \\
   --bind /scratch/${SSH_USER}/space:/scratch \\
-  ${DB_HOST:+--env POSTGRES_HOST=${DB_HOST}} \\
+  ${DB_HOST:+--env DB_HOST=${DB_HOST}} \\
   ${POSTGRES_USER:+--env POSTGRES_USER=${POSTGRES_USER}} \\
   ${POSTGRES_PASSWORD:+--env POSTGRES_PASSWORD=${POSTGRES_PASSWORD}} \\
   ${POSTGRES_DB:+--env POSTGRES_DB=${POSTGRES_DB}} \\
