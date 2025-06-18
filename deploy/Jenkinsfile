@@ -15,6 +15,7 @@ pipeline {
         SIF_PATH = "${SCRATCH_DIR}/images/${IMAGE}.sif"
         OVERLAY_PATH = "${SCRATCH_DIR}/${IMAGE}.ext3"
         DOCKER_URL = "docker://thewillyp/devenv:${params.VARIANT}"
+        SCRIPT_BASE_URL = 'https://raw.githubusercontent.com/thewillyP/devenv/master/deploy'
     }
 
     stages {
@@ -26,25 +27,61 @@ pipeline {
                 }
             }
         }
+
         stage('Cancel Queued Jobs') {
             steps {
                 sh """
-                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} '
-                    for jobname in "build_${IMAGE}" "run_${IMAGE}"; do
-                        active_jobs=\$(squeue -u ${SSH_USER} -n \$jobname -h -o "%i")
-                        if [ -n "\$active_jobs" ]; then
-                            echo "Cancelling existing jobs for \$jobname: \$active_jobs"
-                            for jobid in \$active_jobs; do
-                                scancel \$jobid
-                            done
-                        else
-                            echo "No jobs to cancel for \$jobname"
-                        fi
-                    done
-                '
+                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'curl -s ${SCRIPT_BASE_URL}/cancel_jobs.sh | bash -s ${SSH_USER} ${IMAGE}'
                 """
             }
         }
+
+        stage('Check data_db Service') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'postgres_user', variable: 'POSTGRES_USER'),
+                    string(credentialsId: 'postgres_password', variable: 'POSTGRES_PASSWORD'),
+                    string(credentialsId: 'postgres_db', variable: 'POSTGRES_DB'),
+                    string(credentialsId: 'postgres_port', variable: 'PGPORT')
+                ]) {
+                    script {
+                        def dbStatus = sh(
+                            script: """
+                            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'squeue -u ${SSH_USER} -n data_db -h -o "%i" | wc -l'
+                            """,
+                            returnStdout: true
+                        ).trim()
+
+                        if (dbStatus != "0") {
+                            echo "data_db service is running"
+                            env.DB_HOST = sh(
+                                script: """
+                                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'squeue -u ${SSH_USER} -n data_db -h -o "%N" | head -n 1'
+                                """,
+                                returnStdout: true
+                            ).trim()
+                            env.POSTGRES_USER = "${POSTGRES_USER}"
+                            env.POSTGRES_PASSWORD = "${POSTGRES_PASSWORD}"
+                            env.POSTGRES_DB = "${POSTGRES_DB}"
+                            env.PGPORT = "${PGPORT}"
+                            echo "data_db found on host: ${env.DB_HOST}"
+                        } else {
+                            echo "data_db service not found, proceeding without database connection"
+                            env.DB_HOST = ""
+                            env.POSTGRES_USER = ""
+                            env.POSTGRES_PASSWORD = ""
+                            env.POSTGRES_DB = ""
+                            env.PGPORT = ""
+                        }
+                    }
+                }
+            }
+            options {
+                skipDefaultCheckout()
+                timeout(time: 5, unit: 'MINUTES')
+            }
+        }
+
         stage('Build Image with sbatch if needed') {
             steps {
                 script {
@@ -55,25 +92,9 @@ pipeline {
 
                     if (params.FORCE_REBUILD || exists == "missing") {
                         echo "Submitting sbatch build job for image..."
-
-                        // Submit sbatch and capture Job ID
                         env.BUILD_JOB_ID = sh(
                             script: """
-                            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'sbatch <<EOF
-#!/bin/bash
-#SBATCH --job-name=build_${IMAGE}
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --mem=10G
-#SBATCH --time=00:30:00
-#SBATCH --output=${LOG_DIR}/build-${IMAGE}-%j.log
-#SBATCH --error=${LOG_DIR}/build-${IMAGE}-%j.err
-
-mkdir -p ${SCRATCH_DIR}/images
-cp -rp /scratch/work/public/overlay-fs-ext3/overlay-25GB-500K.ext3.gz ${OVERLAY_PATH}.gz
-gunzip -f ${OVERLAY_PATH}.gz
-singularity build --force ${SIF_PATH} ${DOCKER_URL}
-EOF' | awk '/Submitted batch job/ {print \$4}'
+                            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'curl -s ${SCRIPT_BASE_URL}/build_image.sh | bash -s ${SCRATCH_DIR} ${OVERLAY_PATH} ${SIF_PATH} ${DOCKER_URL} ${LOG_DIR} ${IMAGE}'
                             """,
                             returnStdout: true
                         ).trim()
@@ -85,36 +106,13 @@ EOF' | awk '/Submitted batch job/ {print \$4}'
                 }
             }
         }
+
         stage('Run Job via sbatch') {
             steps {
                 script {
-                    def dependency = env.BUILD_JOB_ID ? "#SBATCH --dependency=afterok:${env.BUILD_JOB_ID}" : ""
-
+                    def dependency = env.BUILD_JOB_ID ? "--dependency=afterok:${env.BUILD_JOB_ID}" : ""
                     sh """
-                    ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'sbatch <<EOF
-#!/bin/bash
-#SBATCH --job-name=run_${IMAGE}
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --mem=14G
-#SBATCH --time=06:00:00
-#SBATCH --cpus-per-task=4
-#SBATCH --output=${LOG_DIR}/run-${IMAGE}-%j.log
-#SBATCH --error=${LOG_DIR}/run-${IMAGE}-%j.err
-#SBATCH --mail-type=BEGIN
-#SBATCH --mail-user=${SSH_USER}@nyu.edu
-${params.VARIANT == 'gpu' ? '#SBATCH --gres=gpu:0' : ''}
-${dependency}
-
-singularity run ${params.VARIANT == 'gpu' ? '--nv' : ''} \\
-  --containall --no-home --cleanenv \\
-  --overlay ${OVERLAY_PATH}:rw \\
-  --bind /home/${SSH_USER}/.ssh \\
-  --bind /home/${SSH_USER}/dev \\
-  --bind /scratch/${SSH_USER}/wandb:/wandb_data \\
-  --bind /scratch/${SSH_USER}/space:/scratch \\
-  ${SIF_PATH}
-EOF'
+                    ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'curl -s ${SCRIPT_BASE_URL}/run_job.sh | bash -s "${LOG_DIR}" "${SIF_PATH}" "${OVERLAY_PATH}" "${SSH_USER}" "${VARIANT}" "${dependency}" "${DB_HOST}" "${POSTGRES_USER}" "${POSTGRES_PASSWORD}" "${POSTGRES_DB}" "${PGPORT}" "${IMAGE}"'
                     """
                 }
             }
