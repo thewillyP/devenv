@@ -60,18 +60,10 @@ pipeline {
                                 """,
                                 returnStdout: true
                             ).trim()
-                            env.POSTGRES_USER = "${POSTGRES_USER}"
-                            env.POSTGRES_PASSWORD = "${POSTGRES_PASSWORD}"
-                            env.POSTGRES_DB = "${POSTGRES_DB}"
-                            env.PGPORT = "${PGPORT}"
                             echo "data_db found on host: ${env.DB_HOST}"
                         } else {
                             echo "data_db service not found, proceeding without database connection"
                             env.DB_HOST = ""
-                            env.POSTGRES_USER = ""
-                            env.POSTGRES_PASSWORD = ""
-                            env.POSTGRES_DB = ""
-                            env.PGPORT = ""
                         }
                     }
                 }
@@ -109,11 +101,22 @@ pipeline {
 
         stage('Run Job via sbatch') {
             steps {
-                script {
-                    def dependency = env.BUILD_JOB_ID ? "--dependency=afterok:${env.BUILD_JOB_ID}" : ""
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'curl -s ${SCRIPT_BASE_URL}/run_job.sh | bash -s "${LOG_DIR}" "${SIF_PATH}" "${OVERLAY_PATH}" "${SSH_USER}" "${VARIANT}" "${dependency}" "${DB_HOST}" "${POSTGRES_USER}" "${POSTGRES_PASSWORD}" "${POSTGRES_DB}" "${PGPORT}" "${IMAGE}"'
-                    """
+                withCredentials([
+                    string(credentialsId: 'postgres_user', variable: 'POSTGRES_USER'),
+                    string(credentialsId: 'postgres_password', variable: 'POSTGRES_PASSWORD'),
+                    string(credentialsId: 'postgres_db', variable: 'POSTGRES_DB'),
+                    string(credentialsId: 'postgres_port', variable: 'PGPORT')
+                ]) {
+                    script {
+                        def dependency = env.BUILD_JOB_ID ? "--dependency=afterok:${env.BUILD_JOB_ID}" : ""
+                        def postgres_user = env.DB_HOST ? POSTGRES_USER : ""
+                        def postgres_password = env.DB_HOST ? POSTGRES_PASSWORD : ""
+                        def postgres_db = env.DB_HOST ? POSTGRES_DB : ""
+                        def pgport = env.DB_HOST ? PGPORT : ""
+                        sh """
+                        ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'curl -s ${SCRIPT_BASE_URL}/run_job.sh | bash -s "${LOG_DIR}" "${SIF_PATH}" "${OVERLAY_PATH}" "${SSH_USER}" "${VARIANT}" "${dependency}" "${env.DB_HOST}" "${postgres_user}" "${postgres_password}" "${postgres_db}" "${pgport}" "${IMAGE}"'
+                        """
+                    }
                 }
             }
         }
