@@ -12,6 +12,15 @@ POSTGRES_DB=${10}
 PGPORT=${11}
 IMAGE=${12}
 
+# Set GPU-specific options based on VARIANT
+if [ "$VARIANT" = "gpu" ]; then
+    GPU_SLURM="#SBATCH --gres=gpu:0"
+    GPU_SINGULARITY="--nv"
+else
+    GPU_SLURM=""
+    GPU_SINGULARITY=""
+fi
+
 sbatch <<EOF
 #!/bin/bash
 #SBATCH --job-name=run_${IMAGE}
@@ -24,10 +33,10 @@ sbatch <<EOF
 #SBATCH --error=${LOG_DIR}/run-${IMAGE}-%j.err
 #SBATCH --mail-type=BEGIN
 #SBATCH --mail-user=${SSH_USER}@nyu.edu
-${VARIANT == 'gpu' ? '#SBATCH --gres=gpu:0' : ''}
+${GPU_SLURM}
 ${DEPENDENCY}
 
-singularity run ${VARIANT == 'gpu' ? '--nv' : ''} \\
+singularity run ${GPU_SINGULARITY} \\
   --containall --no-home --cleanenv \\
   --overlay ${OVERLAY_PATH}:rw \\
   --bind /home/${SSH_USER}/.ssh \\
