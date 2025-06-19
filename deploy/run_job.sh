@@ -34,7 +34,7 @@ sbatch <<EOF
 ${GPU_SLURM}
 ${DEPENDENCY}
 
-singularity run ${GPU_SINGULARITY} \\
+singularity exec ${GPU_SINGULARITY} \\
   --containall --no-home --cleanenv \\
   --overlay ${OVERLAY_PATH}:rw \\
   --bind /home/${SSH_USER}/.ssh \\
@@ -46,5 +46,6 @@ singularity run ${GPU_SINGULARITY} \\
   ${POSTGRES_PASSWORD:+--env POSTGRES_PASSWORD=${POSTGRES_PASSWORD}} \\
   ${POSTGRES_DB:+--env POSTGRES_DB=${POSTGRES_DB}} \\
   ${PGPORT:+--env PGPORT=${PGPORT}} \\
-  ${SIF_PATH}
+  ${SIF_PATH} \\
+  bash -c "curl -fsSL https://raw.githubusercontent.com/thewillyP/devenv/master/entrypoint.sh | bash"
 EOF
