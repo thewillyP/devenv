@@ -16,6 +16,7 @@ pipeline {
         OVERLAY_PATH = "${SCRATCH_DIR}/${IMAGE}.ext3"
         DOCKER_URL = "docker://thewillyp/devenv:${params.VARIANT}"
         SCRIPT_BASE_URL = 'https://raw.githubusercontent.com/thewillyP/devenv/master/deploy'
+        TMP_DIR = "${SCRATCH_DIR}/tmp"
     }
 
     stages {
@@ -99,6 +100,15 @@ pipeline {
             }
         }
 
+        stage('Prepare TMP Directory') {
+            steps {
+                sh """
+                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'mkdir -p ${TMP_DIR}'
+                """
+                echo "TMP directory ${TMP_DIR} created"
+            }
+        }
+
         stage('Run Job via sbatch') {
             steps {
                 withCredentials([
@@ -114,7 +124,7 @@ pipeline {
                         def postgres_db = env.DB_HOST ? POSTGRES_DB : ""
                         def pgport = env.DB_HOST ? PGPORT : ""
                         sh """
-                        ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'curl -s ${SCRIPT_BASE_URL}/run_job.sh | bash -s "${LOG_DIR}" "${SIF_PATH}" "${OVERLAY_PATH}" "${SSH_USER}" "${VARIANT}" "${dependency}" "${env.DB_HOST}" "${postgres_user}" "${postgres_password}" "${postgres_db}" "${pgport}" "${IMAGE}"'
+                        ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'curl -s ${SCRIPT_BASE_URL}/run_job.sh | bash -s "${LOG_DIR}" "${SIF_PATH}" "${OVERLAY_PATH}" "${SSH_USER}" "${VARIANT}" "${dependency}" "${env.DB_HOST}" "${postgres_user}" "${postgres_password}" "${postgres_db}" "${pgport}" "${IMAGE}" "${TMP_DIR}"'
                         """
                     }
                 }

@@ -11,6 +11,7 @@ POSTGRES_PASSWORD=$9
 POSTGRES_DB=${10}
 PGPORT=${11}
 IMAGE=${12}
+TMP_DIR=${13}
 
 # Set GPU-specific options based on VARIANT
 if [ "$VARIANT" = "gpu" ]; then
@@ -34,18 +35,18 @@ sbatch <<EOF
 ${GPU_SLURM}
 ${DEPENDENCY}
 
-singularity exec ${GPU_SINGULARITY} \\
+singularity run ${GPU_SINGULARITY} \\
   --containall --no-home --cleanenv \\
   --overlay ${OVERLAY_PATH}:rw \\
   --bind /home/${SSH_USER}/.ssh \\
   --bind /home/${SSH_USER}/dev \\
   --bind /scratch/${SSH_USER}/wandb:/wandb_data \\
   --bind /scratch/${SSH_USER}/space:/scratch \\
+  --bind ${TMP_DIR}:/tmp \\
   ${DB_HOST:+--env DB_HOST=${DB_HOST}} \\
   ${POSTGRES_USER:+--env POSTGRES_USER=${POSTGRES_USER}} \\
   ${POSTGRES_PASSWORD:+--env POSTGRES_PASSWORD=${POSTGRES_PASSWORD}} \\
   ${POSTGRES_DB:+--env POSTGRES_DB=${POSTGRES_DB}} \\
   ${PGPORT:+--env PGPORT=${PGPORT}} \\
-  ${SIF_PATH} \\
-  bash -c "curl -fsSL https://raw.githubusercontent.com/thewillyP/devenv/master/entrypoint.sh | bash"
+  ${SIF_PATH}
 EOF
