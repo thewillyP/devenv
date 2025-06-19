@@ -15,7 +15,7 @@ TMP_DIR=${13}
 
 # Set GPU-specific options based on VARIANT
 if [ "$VARIANT" = "gpu" ]; then
-    GPU_SLURM="#SBATCH --gres=gpu:0"
+    GPU_SLURM="#SBATCH --gres=gpu:1"
     GPU_SINGULARITY="--nv"
 else
     GPU_SLURM=""
