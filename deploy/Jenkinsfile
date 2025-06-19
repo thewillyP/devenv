@@ -82,15 +82,17 @@ pipeline {
                         script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} '[ -f ${SIF_PATH} ] && echo exists || echo missing'",
                         returnStdout: true
                     ).trim()
-
+        
                     if (params.FORCE_REBUILD || exists == "missing") {
                         echo "Submitting sbatch build job for image..."
-                        env.BUILD_JOB_ID = sh(
+                        def buildOutput = sh(
                             script: """
                             ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'curl -s ${SCRIPT_BASE_URL}/build_image.sh | bash -s ${SCRATCH_DIR} ${OVERLAY_PATH} ${SIF_PATH} ${DOCKER_URL} ${LOG_DIR} ${IMAGE}'
                             """,
                             returnStdout: true
                         ).trim()
+                        // Extract the numeric job ID from "Submitted batch job <job_id>"
+                        env.BUILD_JOB_ID = (buildOutput =~ /Submitted batch job (\d+)/)?.getAt(0)?.getAt(1) ?: ""
                         echo "Build job submitted with ID: ${env.BUILD_JOB_ID}"
                     } else {
                         echo "Singularity image already exists: ${SIF_PATH}. Skipping build."
