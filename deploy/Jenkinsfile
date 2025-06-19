@@ -120,13 +120,12 @@ pipeline {
                     string(credentialsId: 'postgres_port', variable: 'PGPORT')
                 ]) {
                     script {
-                        def dependency = env.BUILD_JOB_ID ? "--dependency=afterok:${env.BUILD_JOB_ID}" : ""
                         def postgres_user = env.DB_HOST ? POSTGRES_USER : ""
                         def postgres_password = env.DB_HOST ? POSTGRES_PASSWORD : ""
                         def postgres_db = env.DB_HOST ? POSTGRES_DB : ""
                         def pgport = env.DB_HOST ? PGPORT : ""
                         sh """
-                        ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'curl -s ${SCRIPT_BASE_URL}/run_job.sh | bash -s "${LOG_DIR}" "${SIF_PATH}" "${OVERLAY_PATH}" "${SSH_USER}" "${VARIANT}" "${dependency}" "${env.DB_HOST}" "${postgres_user}" "${postgres_password}" "${postgres_db}" "${pgport}" "${IMAGE}" "${TMP_DIR}"'
+                        ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'curl -s ${SCRIPT_BASE_URL}/run_job.sh | bash -s "${LOG_DIR}" "${SIF_PATH}" "${OVERLAY_PATH}" "${SSH_USER}" "${VARIANT}" "${env.BUILD_JOB_ID}" "${env.DB_HOST}" "${postgres_user}" "${postgres_password}" "${postgres_db}" "${pgport}" "${IMAGE}" "${TMP_DIR}"'
                         """
                     }
                 }
