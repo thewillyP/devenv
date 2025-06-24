@@ -1,54 +1,50 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-BASHRC="/home/${USER}/.bashrc"
+BASHRC="${HOME}/.bashrc"
 DOCKER_SOURCE='source /.singularity.d/env/10-docker2singularity.sh'
 LIB_EXPORT='export LD_LIBRARY_PATH="/.singularity.d/libs"'
 
 # Define the environment variables to persist
 ENV_VARS=$(cat <<EOF
+# >>> Pipeline environment variables
 export DB_HOST="${DB_HOST}"
 export POSTGRES_USER="${POSTGRES_USER}"
 export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
 export POSTGRES_DB="${POSTGRES_DB}"
 export PGPORT="${PGPORT}"
+# <<< Pipeline environment variables
 EOF
 )
-
-echo $USER
-echo $ENV_VARS
-ls -a ~
-
 
 # Create .bashrc if it doesn't exist
 [ -f "$BASHRC" ] || touch "$BASHRC"
 
-ls -a ~
-
 # Add docker2singularity source line if not already present
-if ! grep -q "$DOCKER_SOURCE" "$BASHRC"; then
-    echo "$DOCKER_SOURCE" >> "$BASHRC"
-fi
+grep -qxF "$DOCKER_SOURCE" "$BASHRC" || echo "$DOCKER_SOURCE" >> "$BASHRC"
 
 # Add LD_LIBRARY_PATH export if not already present
-if ! grep -q "$LIB_EXPORT" "$BASHRC"; then
-    echo "$LIB_EXPORT" >> "$BASHRC"
-fi
+grep -qxF "$LIB_EXPORT" "$BASHRC" || echo "$LIB_EXPORT" >> "$BASHRC"
 
-# Add pipeline environment variables if not already present
-if ! grep -q "# Pipeline environment variables" "$BASHRC"; then
-    echo "$ENV_VARS" >> "$BASHRC"
+# Add or replace pipeline environment variables block
+ESCAPED_ENV_VARS=$(printf '%s\n' "$ENV_VARS" | sed 's/[\/&]/\\&/g')
+
+if grep -q "# >>> Pipeline environment variables" "$BASHRC"; then
+    # Replace the existing block
+    sed -i "/# >>> Pipeline environment variables/,/# <<< Pipeline environment variables/c\\
+$ESCAPED_ENV_VARS
+" "$BASHRC"
 else
-    # Update existing variables to avoid duplicates
-    sed -i '/# Pipeline environment variables/,/^export PGPORT=/c\'"$ENV_VARS" "$BASHRC"
+    # Append new block
+    echo "$ENV_VARS" >> "$BASHRC"
 fi
 
 # Source .bashrc to apply changes in the current session
 source "$BASHRC"
 
 # Launch Jupyter notebook
-mkdir -p /home/${USER}/notebooks
-jupyter lab --notebook-dir=/home/${USER}/notebooks --ip="0.0.0.0" --port=8888 --no-browser &
+mkdir -p "${HOME}/notebooks"
+jupyter lab --notebook-dir="${HOME}/notebooks" --ip="0.0.0.0" --port=8888 --no-browser &
 
 ### SSH Server
 # BIG: ASSUMES YOU OVERLAY THE $USER'S .ssh folder into the container. WILL NOT WORK IF YOU DON'T
