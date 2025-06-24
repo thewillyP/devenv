@@ -27,4 +27,5 @@ dacite
 gymnasium
 gymnasium[box2d]
 polars
+psycopg2-binary
 git+https://github.com/thewillyP/sweep-agent.git
