@@ -1,22 +1,29 @@
 #!/bin/bash
+set -e
 
 BASHRC="/home/${USER}/.bashrc"
 DOCKER_SOURCE='source /.singularity.d/env/10-docker2singularity.sh'
 LIB_EXPORT='export LD_LIBRARY_PATH="/.singularity.d/libs"'
 
 # Define the environment variables to persist
-ENV_VARS=$(cat << EOF
-# Pipeline environment variables
-export DB_HOST="\${DB_HOST}"
-export POSTGRES_USER="\${POSTGRES_USER}"
-export POSTGRES_PASSWORD="\${POSTGRES_PASSWORD}"
-export POSTGRES_DB="\${POSTGRES_DB}"
-export PGPORT="\${PGPORT}"
+ENV_VARS=$(cat <<EOF
+export DB_HOST="${DB_HOST}"
+export POSTGRES_USER="${POSTGRES_USER}"
+export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
+export POSTGRES_DB="${POSTGRES_DB}"
+export PGPORT="${PGPORT}"
 EOF
 )
 
+echo $USER
+echo $ENV_VARS
+ls -a ~
+
+
 # Create .bashrc if it doesn't exist
 [ -f "$BASHRC" ] || touch "$BASHRC"
+
+ls -a ~
 
 # Add docker2singularity source line if not already present
 if ! grep -q "$DOCKER_SOURCE" "$BASHRC"; then
