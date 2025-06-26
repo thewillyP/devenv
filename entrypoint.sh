@@ -8,11 +8,11 @@ LIB_EXPORT='export LD_LIBRARY_PATH="/.singularity.d/libs"'
 # Define the environment variables to persist
 ENV_VARS=$(cat <<EOF
 # >>> Pipeline environment variables
-export DB_HOST="${DB_HOST}"
-export POSTGRES_USER="${POSTGRES_USER}"
-export POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
-export POSTGRES_DB="${POSTGRES_DB}"
-export PGPORT="${PGPORT}"
+export DB_HOST="${DB_HOST:-}"
+export POSTGRES_USER="${POSTGRES_USER:-}"
+export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-}"
+export POSTGRES_DB="${POSTGRES_DB:-}"
+export PGPORT="${PGPORT:-5432}"
 # <<< Pipeline environment variables
 EOF
 )
