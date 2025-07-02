@@ -62,4 +62,5 @@ exec /usr/sbin/sshd -D -p 2222 \
   -o AllowTcpForwarding=yes \
   -o GatewayPorts=yes \
   -o ForceCommand=/bin/bash \
+  -o UsePAM=no \
   -h ~/hostkeys/ssh_host_rsa_key
