@@ -19,8 +19,6 @@ def defaults = [
     useGpu: false 
 ]
 
-def runJobId = singularityPipeline(defaults)
-
 pipeline {
     agent any
 
@@ -32,11 +30,27 @@ pipeline {
     }
 
     stages {
+        stage('Detect Hostname') {
+            steps {
+                script {
+                    env.EXEC_HOST = sh(script: "hostname", returnStdout: true).trim()
+                    echo "Executor host: ${env.EXEC_HOST}"
+                }
+            }
+        }
+        stage('Run Singularity Pipeline') {
+            steps {
+                script {
+                    runJobId = singularityPipeline(defaults)
+                    echo "Singularity job submitted with ID: ${runJobId}"
+                }
+            }
+        }
         stage('Submit DNS Update Job') {
             steps {
                 script {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ${SSH_USER}@${env.EXEC_HOST} \\
+                    ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} \\
                       'curl -fsSL ${SCRIPT_BASE_URL}/submit_dns_job.sh | \\
                       bash -s ${runJobId} ${IMAGE} ${LOG_DIR} dns-update-${IMAGE} 1G 00:05:00 1 ${SSH_USER}'
                     """
