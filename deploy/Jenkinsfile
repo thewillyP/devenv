@@ -1,4 +1,4 @@
-@Library('singularity_template') _ 
+@Library('singularity_template@main') _
 
 def defaults = [
     SSH_USER: 'wlp9800',
