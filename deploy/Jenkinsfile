@@ -1,4 +1,5 @@
 @Library('singularity_template@main') _
+
 def defaults = [
     sshUser: 'wlp9800',
     image: 'devenv-cpu',
@@ -22,6 +23,15 @@ pipeline {
     agent any
 
     stages {
+        stage('Detect Hostname') {
+            steps {
+                script {
+                    env.EXEC_HOST = sh(script: "hostname", returnStdout: true).trim()
+                    echo "Executor host: ${env.EXEC_HOST}"
+                }
+            }
+        }
+
         stage('Run Singularity Pipeline') {
             steps {
                 script {
