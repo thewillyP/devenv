@@ -1,20 +1,20 @@
 @Library('singularity_template@main') _
 
 def defaults = [
-    SSH_USER: 'wlp9800',
-    IMAGE: 'devenv-cpu',
-    SCRATCH_DIR: '/scratch/wlp9800',
-    LOG_DIR: '/vast/wlp9800/logs',
-    DOCKER_URL: 'docker://thewillyp/devenv-cpu',
-    FORCE_REBUILD: false,
-    OVERLAY_SRC: '/scratch/work/public/overlay-fs-ext3/overlay-25GB-500K.ext3.gz',
-    BUILD_TIME: '00:30:00',
-    BUILD_CPUS: '8',
-    BUILD_MEM: '10G',
-    RUN_TIME: '06:00:00',
-    RUN_CPUS: '4',
-    RUN_MEM: '14G',
-    ENTRYPOINT_URL: 'https://raw.githubusercontent.com/thewillyP/devenv/master/entrypoint.sh',
+    sshUser: 'wlp9800',
+    image: 'devenv-cpu',
+    scratchDir: '/scratch/wlp9800',
+    logDir: '/vast/wlp9800/logs',
+    dockerUrl: 'docker://thewillyp/devenv-cpu',
+    forceRebuild: false,
+    overlaySrc: '/scratch/work/public/overlay-fs-ext3/overlay-25GB-500K.ext3.gz',
+    buildTime: '00:30:00',
+    buildCPUs: '8',
+    buildMem: '10G',
+    runTime: '06:00:00',
+    runCPUs: '4',
+    runMem: '14G',
+    entrypointUrl: 'https://raw.githubusercontent.com/thewillyP/devenv/master/entrypoint.sh',
 ]
 
 singularityPipeline(defaults)
