@@ -19,4 +19,29 @@ def defaults = [
     useGpu: false 
 ]
 
-singularityPipeline(defaults)
+def runJobId = singularityPipeline(defaults)
+
+pipeline {
+    agent any
+
+    environment {
+        SSH_USER = "${defaults.sshUser}"
+        IMAGE    = "${defaults.image}"
+        LOG_DIR  = "${defaults.logDir}"
+        SCRIPT_BASE_URL = 'https://raw.githubusercontent.com/thewillyP/jenkins/main'
+    }
+
+    stages {
+        stage('Submit DNS Update Job') {
+            steps {
+                script {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${SSH_USER}@${env.EXEC_HOST} \\
+                      'curl -fsSL ${SCRIPT_BASE_URL}/submit_dns_job.sh | \\
+                      bash -s ${runJobId} ${IMAGE} ${LOG_DIR} dns-update-${IMAGE} 1G 00:05:00 1 ${SSH_USER}'
+                    """
+                }
+            }
+        }
+    }
+}
