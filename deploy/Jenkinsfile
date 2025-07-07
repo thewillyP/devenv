@@ -1,22 +1,38 @@
 @Library('singularity_template@main') _
 
+properties([
+    parameters([
+        booleanParam(name: 'forceRebuild', defaultValue: false, description: 'Force rebuild of the Singularity image'),
+        string(name: 'buildTime', defaultValue: '00:30:00', description: 'Build job time limit'),
+        string(name: 'buildCPUs', defaultValue: '8', description: 'CPUs to allocate for build'),
+        string(name: 'buildMem', defaultValue: '10G', description: 'Memory to allocate for build'),
+        string(name: 'runTime', defaultValue: '06:00:00', description: 'Run job time limit'),
+        string(name: 'runCPUs', defaultValue: '4', description: 'CPUs to allocate for run'),
+        string(name: 'runMem', defaultValue: '14G', description: 'Memory to allocate for run'),
+        string(name: 'binds', defaultValue: '/home/wlp9800/dev,/scratch/wlp9800/wandb:/wandb_data,/scratch/wlp9800/space:/scratch', description: 'Bind paths for Singularity'),
+        booleanParam(name: 'useGpu', defaultValue: false, description: 'Use GPU in the Singularity container')
+    ])
+])
+
 def defaults = [
     sshUser: 'wlp9800',
     image: 'devenv-cpu',
     scratchDir: '/scratch/wlp9800',
     logDir: '/vast/wlp9800/logs',
     dockerUrl: 'docker://thewillyp/devenv-cpu',
-    forceRebuild: false,
     overlaySrc: '/scratch/work/public/overlay-fs-ext3/overlay-25GB-500K.ext3.gz',
-    buildTime: '00:30:00',
-    buildCPUs: '8',
-    buildMem: '10G',
-    runTime: '06:00:00',
-    runCPUs: '4',
-    runMem: '14G',
     entrypointUrl: 'https://raw.githubusercontent.com/thewillyP/devenv/master/entrypoint.sh',
-    binds: "/home/wlp9800/dev,/scratch/wlp9800/wandb:/wandb_data,/scratch/wlp9800/space:/scratch",
-    useGpu: false 
+
+    // Parameters (overridable)
+    forceRebuild: params.forceRebuild,
+    buildTime: params.buildTime,
+    buildCPUs: params.buildCPUs,
+    buildMem: params.buildMem,
+    runTime: params.runTime,
+    runCPUs: params.runCPUs,
+    runMem: params.runMem,
+    binds: params.binds,
+    useGpu: params.useGpu
 ]
 
 pipeline {
