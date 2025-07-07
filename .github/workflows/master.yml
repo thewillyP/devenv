@@ -5,8 +5,8 @@ on:
   push:
     paths-ignore:
       - 'README.md'
-      - '*.slurm'
       - 'deploy/**'
+      - 'entrypoint.sh'
     branches:
       - 'master'
     tags:

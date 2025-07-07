@@ -1,135 +1,20 @@
-pipeline {
-    agent any
+@Library('singularity_template') _ 
 
-    parameters {
-        choice(name: 'VARIANT', choices: ['cpu', 'gpu'], description: 'Select variant (cpu/gpu)')
-        booleanParam(name: 'FORCE_REBUILD', defaultValue: false, description: 'Force rebuild of the Singularity image')
-    }
+def defaults = [
+    SSH_USER: 'wlp9800',
+    IMAGE: 'devenv-cpu',
+    SCRATCH_DIR: '/scratch/wlp9800',
+    LOG_DIR: '/vast/wlp9800/logs',
+    DOCKER_URL: 'docker://thewillyp/devenv-cpu',
+    FORCE_REBUILD: false,
+    OVERLAY_SRC: '/scratch/work/public/overlay-fs-ext3/overlay-25GB-500K.ext3.gz',
+    BUILD_TIME: '00:30:00',
+    BUILD_CPUS: '8',
+    BUILD_MEM: '10G',
+    RUN_TIME: '06:00:00',
+    RUN_CPUS: '4',
+    RUN_MEM: '14G',
+    ENTRYPOINT_URL: 'https://raw.githubusercontent.com/thewillyP/devenv/master/entrypoint.sh',
+]
 
-    environment {
-        SSH_USER = 'wlp9800'
-        VARIANT = "${params.VARIANT}"
-        IMAGE = "devenv-${params.VARIANT}"
-        SCRATCH_DIR = "/scratch/${SSH_USER}"
-        LOG_DIR = "/vast/${SSH_USER}/logs"
-        SIF_PATH = "${SCRATCH_DIR}/images/${IMAGE}.sif"
-        OVERLAY_PATH = "${SCRATCH_DIR}/${IMAGE}.ext3"
-        DOCKER_URL = "docker://thewillyp/devenv:${params.VARIANT}"
-        SCRIPT_BASE_URL = 'https://raw.githubusercontent.com/thewillyP/devenv/master/deploy'
-        TMP_DIR = "${SCRATCH_DIR}/tmp"
-    }
-
-    stages {
-        stage('Get Current Executor Hostname') {
-            steps {
-                script {
-                    env.EXEC_HOST = sh(script: "hostname", returnStdout: true).trim()
-                    echo "Running on host: ${env.EXEC_HOST}"
-                }
-            }
-        }
-
-        stage('Cancel Queued Jobs') {
-            steps {
-                sh """
-                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'curl -s ${SCRIPT_BASE_URL}/cancel_jobs.sh | bash -s ${SSH_USER} ${IMAGE}'
-                """
-            }
-        }
-
-        stage('Check data_db Service') {
-            steps {
-                withCredentials([
-                    string(credentialsId: 'postgres_user', variable: 'POSTGRES_USER'),
-                    string(credentialsId: 'postgres_password', variable: 'POSTGRES_PASSWORD'),
-                    string(credentialsId: 'postgres_db', variable: 'POSTGRES_DB'),
-                    string(credentialsId: 'postgres_port', variable: 'PGPORT')
-                ]) {
-                    script {
-                        def dbStatus = sh(
-                            script: """
-                            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'squeue -u ${SSH_USER} -n data_db -h -o "%i" | wc -l'
-                            """,
-                            returnStdout: true
-                        ).trim()
-
-                        if (dbStatus != "0") {
-                            echo "data_db service is running"
-                            env.DB_HOST = sh(
-                                script: """
-                                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'squeue -u ${SSH_USER} -n data_db -h -o "%N" | head -n 1'
-                                """,
-                                returnStdout: true
-                            ).trim()
-                            echo "data_db found on host: ${env.DB_HOST}"
-                        } else {
-                            echo "data_db service not found, proceeding without database connection"
-                            env.DB_HOST = ""
-                        }
-                    }
-                }
-            }
-            options {
-                skipDefaultCheckout()
-                timeout(time: 5, unit: 'MINUTES')
-            }
-        }
-
-        stage('Build Image with sbatch if needed') {
-            steps {
-                script {
-                    def exists = sh(
-                        script: "ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} '[ -f ${SIF_PATH} ] && echo exists || echo missing'",
-                        returnStdout: true
-                    ).trim()
-        
-                    if (params.FORCE_REBUILD || exists == "missing") {
-                        echo "Submitting sbatch build job for image..."
-                        def buildOutput = sh(
-                            script: """
-                            ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'curl -s ${SCRIPT_BASE_URL}/build_image.sh | bash -s ${SCRATCH_DIR} ${OVERLAY_PATH} ${SIF_PATH} ${DOCKER_URL} ${LOG_DIR} ${IMAGE}'
-                            """,
-                            returnStdout: true
-                        ).trim()
-                        // Extract the numeric job ID from "Submitted batch job <job_id>"
-                        env.BUILD_JOB_ID = (buildOutput =~ /Submitted batch job (\d+)/)?.getAt(0)?.getAt(1) ?: ""
-                        echo "Build job submitted with ID: ${env.BUILD_JOB_ID}"
-                    } else {
-                        echo "Singularity image already exists: ${SIF_PATH}. Skipping build."
-                        env.BUILD_JOB_ID = ""
-                    }
-                }
-            }
-        }
-
-        stage('Prepare TMP Directory') {
-            steps {
-                sh """
-                ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'mkdir -p ${TMP_DIR}'
-                """
-                echo "TMP directory ${TMP_DIR} created"
-            }
-        }
-
-        stage('Run Job via sbatch') {
-            steps {
-                withCredentials([
-                    string(credentialsId: 'postgres_user', variable: 'POSTGRES_USER'),
-                    string(credentialsId: 'postgres_password', variable: 'POSTGRES_PASSWORD'),
-                    string(credentialsId: 'postgres_db', variable: 'POSTGRES_DB'),
-                    string(credentialsId: 'postgres_port', variable: 'PGPORT')
-                ]) {
-                    script {
-                        def postgres_user = env.DB_HOST ? POSTGRES_USER : ""
-                        def postgres_password = env.DB_HOST ? POSTGRES_PASSWORD : ""
-                        def postgres_db = env.DB_HOST ? POSTGRES_DB : ""
-                        def pgport = env.DB_HOST ? PGPORT : ""
-                        sh """
-                        ssh -o StrictHostKeyChecking=no ${SSH_USER}@${EXEC_HOST} 'curl -s ${SCRIPT_BASE_URL}/run_job.sh | bash -s "${LOG_DIR}" "${SIF_PATH}" "${OVERLAY_PATH}" "${SSH_USER}" "${VARIANT}" "${env.BUILD_JOB_ID}" "${env.DB_HOST}" "${postgres_user}" "${postgres_password}" "${postgres_db}" "${pgport}" "${IMAGE}" "${TMP_DIR}"'
-                        """
-                    }
-                }
-            }
-        }
-    }
-}
+singularityPipeline(defaults)
