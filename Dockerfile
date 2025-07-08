@@ -23,6 +23,8 @@ RUN apt-get update \
     graphviz \
     pandoc \
     swig \
+    gnupg \
+    pinentry-curses \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
