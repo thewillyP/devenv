@@ -1,5 +1,3 @@
-@Library('singularity_template@main') _
-
 properties([
     parameters([
         booleanParam(name: 'forceRebuild', defaultValue: false, description: 'Force rebuild of the Singularity image'),
@@ -60,7 +58,7 @@ pipeline {
                 script {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${defaults.sshUser}@${env.EXEC_HOST} 'mkdir -p ${env.LOCAL_SCRIPT_DIR}'
-                    scp -o StrictHostKeyChecking=no -r library ${defaults.sshUser}@${env.EXEC_HOST}:${env.LOCAL_SCRIPT_DIR}/
+                    scp -o StrictHostKeyChecking=no submit_dns_job.sh ${defaults.sshUser}@${env.EXEC_HOST}:${env.LOCAL_SCRIPT_DIR}/
                     """
                 }
             }
@@ -81,7 +79,7 @@ pipeline {
                 script {
                     sh """
                     ssh -o StrictHostKeyChecking=no ${defaults.sshUser}@${env.EXEC_HOST} \\
-                    'bash ${env.LOCAL_SCRIPT_DIR}/library/submit_dns_job.sh \\
+                    'bash ${env.LOCAL_SCRIPT_DIR}/submit_dns_job.sh \\
                     ${env.RUN_JOB_ID} ${defaults.image} ${defaults.logDir} dns-update-${defaults.image} 1G 00:05:00 1 ${defaults.sshUser}'
                     """
                 }
