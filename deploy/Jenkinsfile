@@ -1,3 +1,5 @@
+@Library('singularity_template@main') _
+
 properties([
     parameters([
         booleanParam(name: 'forceRebuild', defaultValue: false, description: 'Force rebuild of the Singularity image'),
