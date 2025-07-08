@@ -10,7 +10,8 @@ properties([
         string(name: 'runCPUs', defaultValue: '4', description: 'CPUs to allocate for run'),
         string(name: 'runMem', defaultValue: '14G', description: 'Memory to allocate for run'),
         string(name: 'binds', defaultValue: '/home/wlp9800/.gnupg,/home/wlp9800/dev,/scratch/wlp9800/wandb:/wandb_data,/scratch/wlp9800/space:/scratch', description: 'Bind paths for Singularity'),
-        booleanParam(name: 'useGpu', defaultValue: false, description: 'Use GPU in the Singularity container')
+        booleanParam(name: 'useGpu', defaultValue: false, description: 'Use GPU in the Singularity container'),
+        booleanParam(name: 'exclusive', defaultValue: true, description: 'Run with exclusive node access')
     ])
 ])
 
@@ -23,7 +24,6 @@ def defaults = [
     overlaySrc: '/scratch/work/public/overlay-fs-ext3/overlay-25GB-500K.ext3.gz',
     entrypointUrl: 'https://raw.githubusercontent.com/thewillyP/devenv/master/entrypoint.sh',
 
-    // Parameters (overridable)
     forceRebuild: params.forceRebuild,
     buildTime: params.buildTime,
     buildCPUs: params.buildCPUs,
@@ -32,7 +32,8 @@ def defaults = [
     runCPUs: params.runCPUs,
     runMem: params.runMem,
     binds: params.binds,
-    useGpu: params.useGpu
+    useGpu: params.useGpu,
+    exclusive: params.exclusive
 ]
 
 pipeline {
