@@ -37,6 +37,9 @@ RUN gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys A6310ACC4672475C && 
     ./aws/install && \
     rm -rf awscliv2.zip awscliv2.sig aws
 
+RUN curl -fsSL "https://github.com/99designs/aws-vault/releases/download/v7.2.0/aws-vault-linux-amd64" -o /usr/local/bin/aws-vault \
+    && chmod +x /usr/local/bin/aws-vault
+
 RUN mkdir /var/run/sshd
 
 # Set bash as the default shell
