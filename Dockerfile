@@ -25,6 +25,7 @@ RUN apt-get update \
     pandoc \
     swig \
     gnupg \
+    less \
     pinentry-curses \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
