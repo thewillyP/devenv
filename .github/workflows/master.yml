@@ -3,17 +3,19 @@ name: ci
 on:
   workflow_dispatch:
   push:
-    paths-ignore:
-      - 'README.md'
-      - 'deploy/**'
-      - 'entrypoint.sh'
     branches:
       - 'master'
     tags:
       - 'v*'
+    paths:
+      - 'Dockerfile'         
+      - '.github/workflows/**'          
   pull_request:
     branches:
       - 'master'
+    paths:
+      - 'Dockerfile'         
+      - '.github/workflows/**'  
 
 jobs:
   docker:
