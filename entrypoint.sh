@@ -5,18 +5,6 @@ BASHRC="${HOME}/.bashrc"
 DOCKER_SOURCE='source /.singularity.d/env/10-docker2singularity.sh'
 LIB_EXPORT='export LD_LIBRARY_PATH="/.singularity.d/libs"'
 
-# Define the environment variables to persist
-ENV_VARS=$(cat <<EOF
-# >>> Pipeline environment variables
-export DB_HOST="${DB_HOST:-}"
-export POSTGRES_USER="${POSTGRES_USER:-}"
-export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-}"
-export POSTGRES_DB="${POSTGRES_DB:-}"
-export PGPORT="${PGPORT:-5432}"
-# <<< Pipeline environment variables
-EOF
-)
-
 # Create .bashrc if it doesn't exist
 [ -f "$BASHRC" ] || touch "$BASHRC"
 
@@ -25,19 +13,6 @@ grep -qxF "$DOCKER_SOURCE" "$BASHRC" || echo "$DOCKER_SOURCE" >> "$BASHRC"
 
 # Add LD_LIBRARY_PATH export if not already present
 grep -qxF "$LIB_EXPORT" "$BASHRC" || echo "$LIB_EXPORT" >> "$BASHRC"
-
-# Add or replace pipeline environment variables block
-ESCAPED_ENV_VARS=$(printf '%s\n' "$ENV_VARS" | sed 's/[\/&]/\\&/g')
-
-if grep -q "# >>> Pipeline environment variables" "$BASHRC"; then
-    # Replace the existing block
-    sed -i "/# >>> Pipeline environment variables/,/# <<< Pipeline environment variables/c\\
-$ESCAPED_ENV_VARS
-" "$BASHRC"
-else
-    # Append new block
-    echo "$ENV_VARS" >> "$BASHRC"
-fi
 
 # Source .bashrc to apply changes in the current session
 source "$BASHRC"
