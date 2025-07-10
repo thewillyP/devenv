@@ -28,4 +28,6 @@ gymnasium
 gymnasium[box2d]
 polars
 psycopg2-binary
+clearml
+clearml-agent
 git+https://github.com/thewillyP/sweep-agent.git
