@@ -8,8 +8,11 @@ on:
     tags:
       - 'v*'
     paths:
-      - 'Dockerfile'         
-      - '.github/workflows/**'          
+      - 'Dockerfile'    
+      - .dockerignore     
+      - '.github/workflows/**'    
+      - 'requirements-cpu.txt'
+      - 'requirements-gpu.txt'      
   pull_request:
     branches:
       - 'master'
