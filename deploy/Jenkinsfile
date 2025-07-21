@@ -14,7 +14,7 @@ properties([
         booleanParam(name: 'exclusive', defaultValue: false, description: 'Run with exclusive node access'),
         string(name: 'proxyjump', defaultValue: 'greene', description: 'Proxyjump server for SSH access'),
         string(name: 'localForwards', defaultValue: '', description: 'Comma-separated list of LocalForward rules (e.g., "8888:localhost:8245,9999:localhost:9000")'),
-        string(name: 'execHost', defaultValue: 'greene', description: 'Execution host for SSH commands')
+        string(name: 'execHost', defaultValue: 'greene.hpc.nyu.edu', description: 'Execution host for SSH commands')
     ])
 ])
 
