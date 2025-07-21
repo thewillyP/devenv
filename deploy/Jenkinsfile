@@ -67,20 +67,22 @@ pipeline {
 
         stage('Submit Service Registration Job') {
             steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'aws-credentials',
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                ]]) {
-                    script {
-                        sh """
-                            ssh -o StrictHostKeyChecking=no ${defaults.sshUser}@${defaults.execHost} '
-                                export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}";
-                                export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}";
-                                bash -s "${env.RUN_JOB_ID}" "${defaults.image}" "${defaults.logDir}" "1G" "00:05:00" "1" "${defaults.proxyjump}" "2001" "${defaults.localForwards}"
-                            ' < register_service.sh
-                        """
+                sshagent(['greene-ssh-key']) {
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: 'aws-credentials',
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        script {
+                            sh """
+                                ssh -o StrictHostKeyChecking=no ${defaults.sshUser}@${defaults.execHost} '
+                                    export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}";
+                                    export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}";
+                                    bash -s "${env.RUN_JOB_ID}" "${defaults.image}" "${defaults.logDir}" "1G" "00:05:00" "1" "${defaults.proxyjump}" "2001" "${defaults.localForwards}"
+                                ' < register_service.sh
+                            """
+                        }
                     }
                 }
             }
