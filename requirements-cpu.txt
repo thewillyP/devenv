@@ -30,4 +30,6 @@ polars
 psycopg2-binary
 clearml
 clearml-agent
+boto3
+boto3-stubs[ssm]
 git+https://github.com/thewillyP/sweep-agent.git
