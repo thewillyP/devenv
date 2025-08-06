@@ -20,10 +20,10 @@ properties([
 
 def defaults = [
     sshUser: 'wlp9800',
-    image: 'devenv-cpu',
+    image: params.useGpu ? 'devenv-gpu' : 'devenv-cpu',
     scratchDir: '/scratch/wlp9800',
     logDir: '/vast/wlp9800/logs',
-    dockerUrl: 'docker://thewillyp/devenv:cpu',
+    dockerUrl: params.useGpu ? 'docker://thewillyp/devenv:gpu' : 'docker://thewillyp/devenv:cpu',
     overlaySrc: '/scratch/work/public/overlay-fs-ext3/overlay-25GB-500K.ext3.gz',
     entrypointUrl: 'https://raw.githubusercontent.com/thewillyP/devenv/master/entrypoint.sh',
     forceRebuild: params.forceRebuild,
