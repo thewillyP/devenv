@@ -1,3 +1,9 @@
+--index-url=https://download.pytorch.org/whl/cpu
+--extra-index-url=https://pypi.org/simple
+
+torch
+torchvision
+
 jupyterlab
 pandas
 matplotlib
@@ -5,8 +11,6 @@ numpy
 scipy
 scikit-learn
 seaborn
-torch
-torchvision
 toolz
 memory_profiler
 typing-extensions
@@ -15,8 +19,8 @@ line_profiler
 pyrsistent
 snakeviz
 equinox
-jaxlib
 jax
+jaxlib
 optax
 torchviz
 donotation
