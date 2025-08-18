@@ -35,3 +35,4 @@ clearml-agent
 boto3
 boto3-stubs[ssm]
 paramiko
+jaxtyping
