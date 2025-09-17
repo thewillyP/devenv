@@ -32,3 +32,4 @@ boto3
 boto3-stubs[ssm]
 paramiko
 jaxtyping
+h5py
