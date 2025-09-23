@@ -2,8 +2,11 @@ FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim@sha256:f106758c361464e22aa194
 
 ENV UV_COMPILE_BYTECODE=1
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
+RUN echo "deb http://deb.debian.org/debian bookworm main contrib" > /etc/apt/sources.list && \
+    echo "deb http://deb.debian.org/debian bookworm-updates main contrib" >> /etc/apt/sources.list && \
+    echo "deb http://security.debian.org/debian-security bookworm-security main contrib" >> /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
     openssh-server \
     apt-utils \
     bash \
@@ -27,6 +30,11 @@ RUN apt-get update \
     gnupg \
     less \
     pinentry-curses \
+    libmagma2 \
+    libmagma-dev \
+    libmagma-sparse2 \
+    libmagma-test \
+    libmagma-doc \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
