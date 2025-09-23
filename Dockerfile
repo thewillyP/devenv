@@ -50,7 +50,7 @@ RUN apt-get update && \
 WORKDIR /opt
 RUN git clone https://github.com/icl-utk-edu/magma.git magma && \
     cd magma && \
-    cp make.inc-examples/make.inc.cuda-gcc make.inc && \
+    cp make.inc-examples/make.inc.mkl-gcc make.inc && \
     sed -i 's|^CUDADIR.*|CUDADIR = /usr/local/cuda|' make.inc && \
     make -j$(nproc) && \
     make install prefix=/usr/local/magma
