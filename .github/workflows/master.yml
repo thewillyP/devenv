@@ -32,7 +32,6 @@ jobs:
         1.0.${{ github.run_number }}-${{ matrix.variant }}
         type=ref,event=tag
         type=raw,value=${{ matrix.variant }}
-      build_args: VARIANT=${{ matrix.variant }}  # Pass the variant as a build argument
-      cache-from: type=gha,scope=${{ matrix.variant }}
-      cache-to: type=gha,mode=max,scope=${{ matrix.variant }}
+      build_args: VARIANT=${{ matrix.variant }}
+      cache_scope: ${{ matrix.variant }}
     secrets: inherit
