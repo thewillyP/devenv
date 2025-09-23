@@ -67,6 +67,9 @@ RUN git clone https://github.com/icl-utk-edu/magma.git magma && \
     make -j$(nproc) && \
     make install prefix=/usr/local/magma
 
+
+RUN cd /opt/magma && make clean
+
 # ------------------------------------------------------------------
 # Environment variables for MAGMA
 # ------------------------------------------------------------------
