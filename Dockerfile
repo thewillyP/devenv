@@ -51,6 +51,8 @@ WORKDIR /opt
 RUN git clone https://github.com/icl-utk-edu/magma.git magma && \
     cd magma && \
     cp make.inc-examples/make.inc.openblas make.inc && \
+    # Point OPENBLASDIR to the system location
+    sed -i 's|^OPENBLASDIR.*|OPENBLASDIR = /usr|' make.inc && \
     sed -i 's|^CUDADIR.*|CUDADIR = /usr/local/cuda|' make.inc && \
     make -j$(nproc) && \
     make install prefix=/usr/local/magma
