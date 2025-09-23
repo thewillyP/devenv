@@ -10,7 +10,9 @@ RUN apt-get update && \
     apt-get update
 
 RUN apt-get install -y --no-install-recommends \
-    nvidia-cuda-toolkit \
+    nvidia-cuda-toolkit && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
     echo "deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
