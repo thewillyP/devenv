@@ -2,7 +2,9 @@
 # Base image: NVIDIA CUDA with development tools
 # ------------------------------------------------------------------
 FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
+ENV UV_COMPILE_BYTECODE=1
 
 # ------------------------------------------------------------------
 # System packages
@@ -40,18 +42,15 @@ RUN apt-get update && \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ------------------------------------------------------------------
-# Install Python 3.13 + pip
+# Install Python 3.13
 # ------------------------------------------------------------------
 RUN add-apt-repository ppa:deadsnakes/ppa -y && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         python3.13 \
         python3.13-venv \
-        python3.13-dev \
-        python3-pip && \
+        python3.13-dev && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.13 1 && \
-    python3 -m ensurepip --upgrade && \
-    python3 -m pip install --upgrade pip setuptools wheel && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ------------------------------------------------------------------
@@ -104,4 +103,4 @@ SHELL ["/bin/bash", "-c"]
 WORKDIR /workspace
 ARG VARIANT
 COPY ./requirements-${VARIANT}.txt ./requirements.txt
-RUN python3 -m pip install --no-cache-dir -r requirements.txt
+RUN uv pip install --system --no-cache -r requirements.txt
