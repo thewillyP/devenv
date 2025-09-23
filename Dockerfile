@@ -3,7 +3,6 @@
 # ------------------------------------------------------------------
 FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
 
-ENV UV_COMPILE_BYTECODE=1
 ENV DEBIAN_FRONTEND=noninteractive
 
 # ------------------------------------------------------------------
@@ -56,12 +55,6 @@ RUN add-apt-repository ppa:deadsnakes/ppa -y && \
     python3 -m pip install --upgrade pip setuptools wheel && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-
-# ------------------------------------------------------------------
-# Install UV
-# ------------------------------------------------------------------
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-
 # ------------------------------------------------------------------
 # Build MAGMA from source (GPU-enabled)
 # ------------------------------------------------------------------
@@ -106,10 +99,10 @@ RUN mkdir /var/run/sshd
 SHELL ["/bin/bash", "-c"]
 
 # ------------------------------------------------------------------
-# Workdir and Python requirements via uv
+# Workdir and Python requirements
 # ------------------------------------------------------------------
 WORKDIR /workspace
 ARG VARIANT
 COPY ./requirements-${VARIANT}.txt ./requirements.txt
 
-RUN uv pip install --system --no-cache -r requirements.txt
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
