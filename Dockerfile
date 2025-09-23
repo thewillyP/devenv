@@ -1,19 +1,19 @@
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim@sha256:f106758c361464e22aa1946c1338ae94de22ec784943494f26485d345dac2d85
+# ------------------------------------------------------------------
+# Base image: NVIDIA CUDA with development tools (so we have nvcc)
+# ------------------------------------------------------------------
+FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
 
+# ------------------------------------------------------------------
+# Preserve your UV env variable
+# ------------------------------------------------------------------
 ENV UV_COMPILE_BYTECODE=1
 
+# ------------------------------------------------------------------
+# System packages and original libraries
+# ------------------------------------------------------------------
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends wget && \
-    wget https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_64/cuda-keyring_1.1-1_all.deb && \
-    dpkg -i cuda-keyring_1.1-1_all.deb && \
-    rm cuda-keyring_1.1-1_all.deb && \
-    apt-get update
-
-RUN echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
-    echo "deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
-    echo "deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
-    apt-get update && \
     apt-get install -y --no-install-recommends \
+    wget \
     openssh-server \
     apt-utils \
     bash \
@@ -36,14 +36,35 @@ RUN echo "deb http://deb.debian.org/debian bookworm main contrib non-free non-fr
     gnupg \
     less \
     pinentry-curses \
-    libmagma2 \
-    libmagma-dev \
-    libmagma-sparse2 \
-    libmagma-test \
-    libmagma-doc \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    libopenblas-dev \
+    liblapack-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# ------------------------------------------------------------------
+# CUDA setup is already provided by NVIDIA image, no need to add keyring manually
+# ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# Build MAGMA from source (GPU-enabled)
+# ------------------------------------------------------------------
+WORKDIR /opt
+RUN git clone https://github.com/icl-utk-edu/magma.git magma && \
+    cd magma && \
+    cp make.inc-examples/make.inc.cuda-gcc make.inc && \
+    sed -i 's|^CUDADIR.*|CUDADIR = /usr/local/cuda|' make.inc && \
+    make -j$(nproc) && \
+    make install prefix=/usr/local/magma
+
+# ------------------------------------------------------------------
+# Environment variables for MAGMA
+# ------------------------------------------------------------------
+ENV MAGMA_HOME=/usr/local/magma
+ENV LD_LIBRARY_PATH=$MAGMA_HOME/lib:$LD_LIBRARY_PATH
+ENV PATH=$MAGMA_HOME/bin:$PATH
+
+# ------------------------------------------------------------------
+# Install AWS CLI and aws-vault (from your original Dockerfile)
+# ------------------------------------------------------------------
 RUN gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys A6310ACC4672475C && \
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     curl -o awscliv2.sig https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip.sig && \
@@ -55,15 +76,30 @@ RUN gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys A6310ACC4672475C && 
 RUN curl -fsSL "https://github.com/99designs/aws-vault/releases/download/v7.2.0/aws-vault-linux-amd64" -o /usr/local/bin/aws-vault \
     && chmod +x /usr/local/bin/aws-vault
 
+# ------------------------------------------------------------------
+# SSHD setup
+# ------------------------------------------------------------------
 RUN mkdir /var/run/sshd
 
-# Set bash as the default shell
+# ------------------------------------------------------------------
+# Set bash as default shell
+# ------------------------------------------------------------------
 SHELL ["/bin/bash", "-c"]
 
+# ------------------------------------------------------------------
+# Workdir and Python requirements via uv
+# ------------------------------------------------------------------
 WORKDIR /workspace
-
-# Use build argument to select the correct requirements file
 ARG VARIANT
 COPY ./requirements-${VARIANT}.txt ./requirements.txt
 
+# Install uv if missing (NVIDIA image does not include uv)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install Python dependencies using uv
 RUN uv pip install --system --no-cache -r requirements.txt
+
+# ------------------------------------------------------------------
+# Default command
+# ------------------------------------------------------------------
+CMD ["bash"]
