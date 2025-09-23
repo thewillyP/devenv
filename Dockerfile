@@ -2,7 +2,6 @@
 # Base image: NVIDIA CUDA with development tools
 # ------------------------------------------------------------------
 FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
-
 ENV DEBIAN_FRONTEND=noninteractive
 
 # ------------------------------------------------------------------
@@ -65,10 +64,8 @@ RUN git clone https://github.com/icl-utk-edu/magma.git magma && \
     sed -i 's|^OPENBLASDIR.*|OPENBLASDIR = /usr|' make.inc && \
     sed -i 's|^CUDADIR.*|CUDADIR = /usr/local/cuda|' make.inc && \
     make -j$(nproc) && \
-    make install prefix=/usr/local/magma
-
-
-RUN cd /opt/magma && make clean
+    make install prefix=/usr/local/magma && \
+    cd .. && rm -rf magma
 
 # ------------------------------------------------------------------
 # Environment variables for MAGMA
@@ -107,5 +104,4 @@ SHELL ["/bin/bash", "-c"]
 WORKDIR /workspace
 ARG VARIANT
 COPY ./requirements-${VARIANT}.txt ./requirements.txt
-
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
