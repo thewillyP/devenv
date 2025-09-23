@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------
-# Base image: NVIDIA CUDA with development tools (so we have nvcc)
+# Base image: NVIDIA CUDA with development tools
 # ------------------------------------------------------------------
 FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
 
@@ -9,7 +9,7 @@ FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
 ENV UV_COMPILE_BYTECODE=1
 
 # ------------------------------------------------------------------
-# System packages and original libraries
+# System packages
 # ------------------------------------------------------------------
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -38,11 +38,24 @@ RUN apt-get update && \
     pinentry-curses \
     libopenblas-dev \
     liblapack-dev \
+    software-properties-common \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ------------------------------------------------------------------
-# CUDA setup is already provided by NVIDIA image, no need to add keyring manually
+# Install Python 3.13 + pip
 # ------------------------------------------------------------------
+RUN add-apt-repository ppa:deadsnakes/ppa -y && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends python3.13 python3.13-venv python3.13-dev python3.13-distutils python3-pip && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.13 1 && \
+    python3 -m ensurepip --upgrade && \
+    python3 -m pip install --upgrade pip setuptools wheel && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------------------------------------
+# Install UV
+# ------------------------------------------------------------------
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # ------------------------------------------------------------------
 # Build MAGMA from source (GPU-enabled)
@@ -51,7 +64,6 @@ WORKDIR /opt
 RUN git clone https://github.com/icl-utk-edu/magma.git magma && \
     cd magma && \
     cp make.inc-examples/make.inc.openblas make.inc && \
-    # Point OPENBLASDIR to the system location
     sed -i 's|^OPENBLASDIR.*|OPENBLASDIR = /usr|' make.inc && \
     sed -i 's|^CUDADIR.*|CUDADIR = /usr/local/cuda|' make.inc && \
     make -j$(nproc) && \
@@ -65,7 +77,7 @@ ENV LD_LIBRARY_PATH=$MAGMA_HOME/lib:$LD_LIBRARY_PATH
 ENV PATH=$MAGMA_HOME/bin:$PATH
 
 # ------------------------------------------------------------------
-# Install AWS CLI and aws-vault (from your original Dockerfile)
+# Install AWS CLI and aws-vault
 # ------------------------------------------------------------------
 RUN gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys A6310ACC4672475C && \
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
@@ -95,13 +107,4 @@ WORKDIR /workspace
 ARG VARIANT
 COPY ./requirements-${VARIANT}.txt ./requirements.txt
 
-# Install uv if missing (NVIDIA image does not include uv)
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install Python dependencies using uv
 RUN uv pip install --system --no-cache -r requirements.txt
-
-# ------------------------------------------------------------------
-# Default command
-# ------------------------------------------------------------------
-CMD ["bash"]
