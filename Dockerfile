@@ -1,25 +1,16 @@
-# ------------------------------------------------------------------
-# Base image: NVIDIA CUDA with development tools
-# ------------------------------------------------------------------
-FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-ENV DEBIAN_FRONTEND=noninteractive
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim@sha256:f106758c361464e22aa1946c1338ae94de22ec784943494f26485d345dac2d85
+
 ENV UV_COMPILE_BYTECODE=1
 
-# ------------------------------------------------------------------
-# System packages
-# ------------------------------------------------------------------
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    gfortran \
-    gfortran-multilib \
-    wget \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
     openssh-server \
     apt-utils \
     bash \
     build-essential \
     ca-certificates \
     curl \
+    wget \
     git \
     nano \
     zip \
@@ -36,46 +27,9 @@ RUN apt-get update && \
     gnupg \
     less \
     pinentry-curses \
-    libopenblas-dev \
-    liblapack-dev \
-    software-properties-common \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# ------------------------------------------------------------------
-# Install Python 3.13
-# ------------------------------------------------------------------
-RUN add-apt-repository ppa:deadsnakes/ppa -y && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-        python3.13 \
-        python3.13-venv \
-        python3.13-dev && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.13 1 && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# ------------------------------------------------------------------
-# Build MAGMA from source (GPU-enabled)
-# ------------------------------------------------------------------
-WORKDIR /opt
-RUN git clone https://github.com/icl-utk-edu/magma.git magma && \
-    cd magma && \
-    cp make.inc-examples/make.inc.openblas make.inc && \
-    sed -i 's|^OPENBLASDIR.*|OPENBLASDIR = /usr|' make.inc && \
-    sed -i 's|^CUDADIR.*|CUDADIR = /usr/local/cuda|' make.inc && \
-    make -j$(nproc) && \
-    make install prefix=/usr/local/magma && \
-    cd .. && rm -rf magma
-
-# ------------------------------------------------------------------
-# Environment variables for MAGMA
-# ------------------------------------------------------------------
-ENV MAGMA_HOME=/usr/local/magma
-ENV LD_LIBRARY_PATH=$MAGMA_HOME/lib:$LD_LIBRARY_PATH
-ENV PATH=$MAGMA_HOME/bin:$PATH
-
-# ------------------------------------------------------------------
-# Install AWS CLI and aws-vault
-# ------------------------------------------------------------------
 RUN gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys A6310ACC4672475C && \
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     curl -o awscliv2.sig https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip.sig && \
@@ -87,20 +41,15 @@ RUN gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys A6310ACC4672475C && 
 RUN curl -fsSL "https://github.com/99designs/aws-vault/releases/download/v7.2.0/aws-vault-linux-amd64" -o /usr/local/bin/aws-vault \
     && chmod +x /usr/local/bin/aws-vault
 
-# ------------------------------------------------------------------
-# SSHD setup
-# ------------------------------------------------------------------
 RUN mkdir /var/run/sshd
 
-# ------------------------------------------------------------------
-# Set bash as default shell
-# ------------------------------------------------------------------
+# Set bash as the default shell
 SHELL ["/bin/bash", "-c"]
 
-# ------------------------------------------------------------------
-# Workdir and Python requirements
-# ------------------------------------------------------------------
 WORKDIR /workspace
+
+# Use build argument to select the correct requirements file
 ARG VARIANT
 COPY ./requirements-${VARIANT}.txt ./requirements.txt
+
 RUN uv pip install --system --no-cache -r requirements.txt
