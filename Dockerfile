@@ -4,7 +4,7 @@ ENV UV_COMPILE_BYTECODE=1
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-    dropbear \
+    openssh-server \
     apt-utils \
     bash \
     build-essential \
@@ -41,10 +41,14 @@ RUN gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys A6310ACC4672475C && 
 RUN curl -fsSL "https://github.com/99designs/aws-vault/releases/download/v7.2.0/aws-vault-linux-amd64" -o /usr/local/bin/aws-vault \
     && chmod +x /usr/local/bin/aws-vault
 
+RUN mkdir /var/run/sshd
+
+# Set bash as the default shell
 SHELL ["/bin/bash", "-c"]
 
 WORKDIR /workspace
 
+# Use build argument to select the correct requirements file
 ARG VARIANT
 COPY ./requirements-${VARIANT}.txt ./requirements.txt
 
