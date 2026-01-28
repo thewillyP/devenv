@@ -26,13 +26,18 @@ jupyter lab --notebook-dir="${HOME}/notebooks" --ip="0.0.0.0" --port=8888 --no-b
 # Fakeroot fixes (silent fail if not in fakeroot)
 # 1. Remap sshd user to uid 0 (fixes privsep security check)
 sed -i 's/^sshd:x:100:65534:/sshd:x:0:0:/' /etc/passwd 2>/dev/null || true
-# 2. Add uid 1000 mapping (fixes tar chown for VS Code server)
-grep -q "^vscode:" /etc/passwd 2>/dev/null || echo "vscode:x:1000:1000::/nonexistent:/bin/false" >> /etc/passwd 2>/dev/null || true
-grep -q "^vscode:" /etc/group 2>/dev/null || echo "vscode:x:1000:" >> /etc/group 2>/dev/null || true
+# 2. Tar wrapper to skip chown (fixes tar for VS Code server and any other tarballs)
+(
+cat > /usr/local/bin/tar << 'EOF'
+#!/bin/bash
+exec /bin/tar --no-same-owner "$@"
+EOF
+chmod +x /usr/local/bin/tar
+) 2>/dev/null || true
 
 # Dynamically generate sshd keys for the ssh server
 mkdir -p ~/hostkeys
-ssh-keygen -q -N "" -t rsa -b 4096 -f ~/hostkeys/ssh_host_rsa_key <<< y
+[ -f ~/hostkeys/ssh_host_rsa_key ] || ssh-keygen -q -N "" -t rsa -b 4096 -f ~/hostkeys/ssh_host_rsa_key
 
 exec /usr/sbin/sshd -D -p 2001 \
     -o PermitUserEnvironment=yes \
