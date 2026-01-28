@@ -16,7 +16,7 @@ properties([
         booleanParam(name: 'fakeroot', defaultValue: true, description: 'Run with --fakeroot for overlay write access'),
         string(name: 'local_forwards', defaultValue: '', description: 'Comma-separated list of LocalForward rules'),
         string(name: 'entrypoint_repo', defaultValue: 'thewillyP/devenv', description: 'GitHub repo for entrypoint'),
-        string(name: 'entrypoint_commit', defaultValue: '3c7c5f4fd84a6bccb47b00812383baaf9242507f', description: 'Commit SHA for entrypoint'),
+        string(name: 'entrypoint_commit', defaultValue: '02c3d204c7b5584185f7889664cb219698f54f44', description: 'Commit SHA for entrypoint'),
         string(name: 'entrypoint_path', defaultValue: 'entrypoint.sh', description: 'Path to entrypoint in repo'),
         booleanParam(name: 'root_ssh', defaultValue: true, description: 'Run as root inside container (binds SSH to /root/.ssh, consul user is root)')
     ])
