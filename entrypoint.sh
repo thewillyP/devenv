@@ -19,7 +19,7 @@ source "$BASHRC"
 
 # Launch Jupyter notebook
 mkdir -p "${HOME}/notebooks"
-jupyter lab --notebook-dir="${HOME}/notebooks" --ip="0.0.0.0" --port=8888 --no-browser &
+jupyter lab --notebook-dir="${HOME}/notebooks" --ip="0.0.0.0" --port=8888 --no-browser --allow-root &
 
 ### SSH Server
 
