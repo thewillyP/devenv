@@ -13,8 +13,6 @@ properties([
         string(name: 'binds', defaultValue: '/home/wlp9800/.awsvault,/home/wlp9800/.gnupg,/home/wlp9800/dev,/scratch/wlp9800:/scratch', description: 'Bind paths for Singularity'),
         booleanParam(name: 'use_gpu', defaultValue: false, description: 'Use GPU in the Singularity container'),
         booleanParam(name: 'exclusive', defaultValue: false, description: 'Run with exclusive node access'),
-        string(name: 'account', defaultValue: '', description: 'Slurm account (leave empty to use cluster default)'),
-        string(name: 'proxyjump', defaultValue: '', description: 'Proxyjump server (leave empty to use cluster default)'),
         string(name: 'local_forwards', defaultValue: '', description: 'Comma-separated list of LocalForward rules'),
         string(name: 'entrypoint_repo', defaultValue: 'thewillyP/devenv', description: 'GitHub repo for entrypoint'),
         string(name: 'entrypoint_commit', defaultValue: '3c7c5f4fd84a6bccb47b00812383baaf9242507f', description: 'Commit SHA for entrypoint'),
@@ -26,13 +24,13 @@ properties([
 def cluster_config = [
     torch: [
         overlay_src: '/share/apps/overlay-fs-ext3/overlay-50G-10M.ext3.gz',
-        default_account: 'torch_pr_466_general',
-        default_proxyjump: 'torch'
+        account: 'torch_pr_466_general',
+        proxyjump: 'torch'
     ],
     greene: [
         overlay_src: '/scratch/work/public/overlay-fs-ext3/overlay-50G-10M.ext3.gz',
-        default_account: '',
-        default_proxyjump: 'greene'
+        account: '',
+        proxyjump: 'greene'
     ]
 ]
 
@@ -40,8 +38,6 @@ def cfg = cluster_config[params.cluster]
 def ssh_user = 'wlp9800'
 def ssh_bind = params.root_ssh ? "/home/${ssh_user}/.ssh:/root/.ssh" : "/home/${ssh_user}/.ssh"
 def consul_ssh_user = params.root_ssh ? 'root' : ssh_user
-def account = params.account ?: cfg.default_account
-def proxyjump = params.proxyjump ?: cfg.default_proxyjump
 
 def defaults = [
     cluster: params.cluster,
@@ -64,7 +60,7 @@ def defaults = [
     binds: params.binds,
     useGpu: params.use_gpu,
     exclusive: params.exclusive,
-    account: account,
+    account: cfg.account,
     sshBind: ssh_bind
 ]
 
@@ -105,7 +101,7 @@ pipeline {
                             ssh ${params.cluster} '
                                 export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}";
                                 export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}";
-                                bash -s "${env.RUN_JOB_ID}" "${defaults.image}" "${defaults.logDir}" "2G" "00:05:00" "2" "${proxyjump}" "2001" "${params.local_forwards}" "${consul_ssh_user}" "0" "0" "${account}"
+                                bash -s "${env.RUN_JOB_ID}" "${defaults.image}" "${defaults.logDir}" "2G" "00:05:00" "2" "${cfg.proxyjump}" "2001" "${params.local_forwards}" "${consul_ssh_user}" "0" "0" "${cfg.account}"
                             ' < register_service.sh
                         """
                     }
