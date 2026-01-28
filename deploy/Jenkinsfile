@@ -10,9 +10,10 @@ properties([
         string(name: 'run_time', defaultValue: '06:00:00', description: 'Run job time limit'),
         string(name: 'run_cpus', defaultValue: '4', description: 'CPUs to allocate for run'),
         string(name: 'run_mem', defaultValue: '24G', description: 'Memory to allocate for run'),
-        string(name: 'binds', defaultValue: '/home/wlp9800/.awsvault,/home/wlp9800/.gnupg,/home/wlp9800/dev,/scratch/wlp9800:/scratch', description: 'Bind paths for Singularity'),
+        string(name: 'binds', defaultValue: '/home/wlp9800/dev:/root/dev', description: 'Bind paths for Singularity'),
         booleanParam(name: 'use_gpu', defaultValue: false, description: 'Use GPU in the Singularity container'),
         booleanParam(name: 'exclusive', defaultValue: false, description: 'Run with exclusive node access'),
+        booleanParam(name: 'fakeroot', defaultValue: true, description: 'Run with --fakeroot for overlay write access'),
         string(name: 'local_forwards', defaultValue: '', description: 'Comma-separated list of LocalForward rules'),
         string(name: 'entrypoint_repo', defaultValue: 'thewillyP/devenv', description: 'GitHub repo for entrypoint'),
         string(name: 'entrypoint_commit', defaultValue: '3c7c5f4fd84a6bccb47b00812383baaf9242507f', description: 'Commit SHA for entrypoint'),
@@ -60,6 +61,7 @@ def defaults = [
     binds: params.binds,
     useGpu: params.use_gpu,
     exclusive: params.exclusive,
+    fakeroot: params.fakeroot,
     account: cfg.account,
     sshBind: ssh_bind
 ]
