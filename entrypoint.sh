@@ -25,7 +25,7 @@ jupyter lab --notebook-dir="${HOME}/notebooks" --ip="0.0.0.0" --port=8888 --no-b
 
 # Fakeroot fixes (silent fail if not in fakeroot)
 # 1. Remap sshd user to uid 0 (fixes privsep security check)
-sed -i 's/^sshd:x:100:65534:/sshd:x:0:0:/' /etc/passwd 2>/dev/null || true
+sed -i 's/^sshd:x:[0-9]*:[0-9]*:/sshd:x:0:0:/' /etc/passwd 2>/dev/null || true
 # 2. Tar wrapper to skip chown (fixes tar for VS Code server and any other tarballs)
 (
 cat > /usr/local/bin/tar << 'EOF'
