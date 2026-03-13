@@ -34,3 +34,4 @@ paramiko
 jaxtyping
 h5py
 toposort
+pytest
