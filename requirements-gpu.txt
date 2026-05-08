@@ -35,3 +35,4 @@ jaxtyping
 h5py
 toposort
 pytest
+umap-learn
