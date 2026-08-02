@@ -13,7 +13,7 @@ hpcDeploy(
     run:   [time: '06:00:00', mem: '24G', cpus: 4],
 
     fakeroot: true,
-    binds:    '/home/wlp9800/dev:/root/dev',
+    binds:    '/home/wlp9800/dev:/root/dev,/home/wlp9800/.ssh:/root/.ssh',
     tsTag:    'tag:devenv',
 
     // ''' not """ -- Groovy does not interpolate single-quoted strings, so
