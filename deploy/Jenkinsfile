@@ -1,114 +1,25 @@
-@Library('singularity_template@main') _
+library identifier: 'hpc@main', retriever: modernSCM([
+    $class: 'GitSCMSource', remote: 'https://github.com/thewillyP/hpc-deploy.git'])
 
-properties([
-    parameters([
-        choice(name: 'cluster', choices: ['torch', 'greene'], description: 'HPC cluster to use'),
-        booleanParam(name: 'force_rebuild', defaultValue: false, description: 'Force rebuild of the Singularity image'),
-        string(name: 'build_time', defaultValue: '00:45:00', description: 'Build job time limit'),
-        string(name: 'build_cpus', defaultValue: '8', description: 'CPUs to allocate for build'),
-        string(name: 'build_mem', defaultValue: '16G', description: 'Memory to allocate for build'),
-        string(name: 'run_time', defaultValue: '06:00:00', description: 'Run job time limit'),
-        string(name: 'run_cpus', defaultValue: '4', description: 'CPUs to allocate for run'),
-        string(name: 'run_mem', defaultValue: '24G', description: 'Memory to allocate for run'),
-        string(name: 'binds', defaultValue: '/home/wlp9800/dev:/root/dev', description: 'Bind paths for Singularity'),
-        booleanParam(name: 'use_gpu', defaultValue: false, description: 'Use GPU in the Singularity container'),
-        booleanParam(name: 'exclusive', defaultValue: false, description: 'Run with exclusive node access'),
-        booleanParam(name: 'fakeroot', defaultValue: true, description: 'Run with --fakeroot for overlay write access'),
-        string(name: 'local_forwards', defaultValue: '8888:localhost:8888', description: 'Comma-separated list of LocalForward rules'),
-        string(name: 'entrypoint_repo', defaultValue: 'thewillyP/devenv', description: 'GitHub repo for entrypoint'),
-        string(name: 'entrypoint_commit', defaultValue: '65dd7dd17b848b2fcfea85eaca516fc629089417', description: 'Commit SHA for entrypoint'),
-        string(name: 'entrypoint_path', defaultValue: 'entrypoint.sh', description: 'Path to entrypoint in repo'),
-        booleanParam(name: 'root_ssh', defaultValue: true, description: 'Run as root inside container (binds SSH to /root/.ssh, consul user is root)')
-    ])
-])
+hpcDeploy(
+    image: 'devenv',
 
-def cluster_config = [
-    torch: [
-        overlay_src: '/share/apps/overlay-fs-ext3/overlay-50G-10M.ext3.gz',
-        account: 'torch_pr_466_general',
-        proxyjump: 'torch'
+    variants: [
+        cpu: [dockerUrl: 'docker://thewillyp/devenv:cpu', gpu: false],
+        gpu: [dockerUrl: 'docker://thewillyp/devenv:gpu', gpu: true],
     ],
-    greene: [
-        overlay_src: '/scratch/work/public/overlay-fs-ext3/overlay-50G-10M.ext3.gz',
-        account: '',
-        proxyjump: 'greene'
-    ]
-]
 
-def cfg = cluster_config[params.cluster]
-def ssh_user = 'wlp9800'
-def ssh_bind = params.root_ssh ? "/home/${ssh_user}/.ssh:/root/.ssh" : "/home/${ssh_user}/.ssh"
-def consul_ssh_user = params.root_ssh ? 'root' : ssh_user
+    build: [time: '00:45:00', mem: '32G', cpus: 8],
+    run:   [time: '06:00:00', mem: '24G', cpus: 4],
 
-def defaults = [
-    cluster: params.cluster,
-    sshUser: ssh_user,
-    image: params.use_gpu ? 'devenv-gpu' : 'devenv-cpu',
-    scratchDir: '/scratch/wlp9800',
-    logDir: '/scratch/wlp9800/logs',
-    dockerUrl: params.use_gpu ? 'docker://thewillyp/devenv:gpu' : 'docker://thewillyp/devenv:cpu',
-    overlaySrc: cfg.overlay_src,
-    entrypointRepo: params.entrypoint_repo,
-    entrypointCommit: params.entrypoint_commit,
-    entrypointPath: params.entrypoint_path,
-    forceRebuild: params.force_rebuild,
-    buildTime: params.build_time,
-    buildCPUs: params.build_cpus,
-    buildMem: params.build_mem,
-    runTime: params.run_time,
-    runCPUs: params.run_cpus,
-    runMem: params.run_mem,
-    binds: params.binds,
-    useGpu: params.use_gpu,
-    exclusive: params.exclusive,
-    fakeroot: params.fakeroot,
-    account: cfg.account,
-    sshBind: ssh_bind
-]
+    fakeroot: true,
+    binds:    '/home/wlp9800/dev:/root/dev',
+    tsTag:    'tag:devenv',
 
-pipeline {
-    agent any
-
-    stages {
-        stage('Checkout Scripts') {
-            steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[url: 'https://github.com/thewillyP/jenkins.git']]
-                ])
-            }
-        }
-
-        stage('Run Singularity Pipeline') {
-            steps {
-                script {
-                    def run_job_id = singularityPipeline(defaults)
-                    echo "Singularity run job id: ${run_job_id}"
-                    env.RUN_JOB_ID = run_job_id
-                }
-            }
-        }
-
-        stage('Submit Service Registration Job') {
-            steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'aws-credentials',
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                ]]) {
-                    script {
-                        sh """
-                            ssh ${params.cluster} '
-                                export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}";
-                                export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}";
-                                bash -s "${env.RUN_JOB_ID}" "${defaults.image}" "${defaults.logDir}" "2G" "00:05:00" "2" "${cfg.proxyjump}" "2001" "${params.local_forwards}" "${consul_ssh_user}" "0" "0" "${cfg.account}"
-                            ' < register_service.sh
-                        """
-                    }
-                }
-            }
-        }
-    }
-}
+    // ''' not """ -- Groovy does not interpolate single-quoted strings, so
+    // these $VARS reach the compute node verbatim.
+    runJob: '''
+        ts_up "$TS_HOSTNAME" "$TS_TAG"
+        sif_run "$SIF" /entrypoint.sh
+    ''',
+)
