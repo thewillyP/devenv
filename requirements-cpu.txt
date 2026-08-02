@@ -7,7 +7,7 @@ torchvision
 jupyterlab
 pandas
 matplotlib
-numpy
+numpy<2.5
 scipy
 scikit-learn
 seaborn

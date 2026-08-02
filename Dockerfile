@@ -52,6 +52,6 @@ WORKDIR /workspace
 ARG VARIANT
 COPY ./requirements-${VARIANT}.txt ./requirements.txt
 
-RUN uv pip install --system --no-cache --index-strategy unsafe-best-match -r requirements.txt
+RUN uv pip install --system --no-cache -r requirements.txt
 
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
