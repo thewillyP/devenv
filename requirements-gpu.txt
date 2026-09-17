@@ -36,3 +36,4 @@ h5py
 toposort
 pytest
 umap-learn
+plum-dispatch
